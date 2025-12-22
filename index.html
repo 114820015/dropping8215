@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D 俄羅斯方塊 (Cyberpunk Vertical)</title>
+    <title>3D 俄羅斯方塊 (PC Arcade)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -21,12 +21,12 @@
             touch-action: none; 
         }
 
-        /* 遊戲舞台：改回直向 720x1280 */
+        /* 遊戲舞台：固定 1920x1080 解析度，自動縮放 */
         #game-stage {
             position: relative;
-            width: 720px;
-            height: 1280px;
-            background: radial-gradient(circle at center, #1a0b2e 0%, #000000 100%);
+            width: 1920px;
+            height: 1080px;
+            background: radial-gradient(circle at center, #1a0b2e 0%, #000000 80%);
             overflow: hidden;
             box-shadow: 0 0 50px rgba(0, 255, 255, 0.1);
             transform-origin: center center;
@@ -45,49 +45,41 @@
         /* UI 層 */
         #ui-layer {
             position: absolute;
-            top: 30px;
-            left: 30px;
+            top: 50px;
+            left: 50px;
             pointer-events: none;
             z-index: 20;
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 15px;
+            gap: 20px;
         }
 
-        /* 介面定位錨點 */
-        #board-area {
+        /* 介面定位錨點 - 根據 1920x1080 計算的中心位置 */
+        /* 盤面寬度約 600px，左右面板定位在中心點 +/- 450px 處 */
+        .side-panel {
             position: absolute;
-            top: 45%; /* 稍微往上提，留空間給按鍵 */
-            left: 50%;
-            width: 100px;
-            height: 100px;
+            top: 45%; /* 稍微偏上 */
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
             pointer-events: none;
             z-index: 10;
         }
 
-        .side-panel {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            pointer-events: none;
-        }
-
+        /* 左側面板 */
         #left-panel {
-            top: 25%; 
-            right: 100%; 
-            margin-right: 4px;
+            left: 50%;
+            margin-left: -550px; /* 中心點向左偏移 */
             align-items: flex-end;
-            transform: translateY(-50%);
         }
 
+        /* 右側面板 */
         #right-panel {
-            top: 25%;
-            left: 100%; 
-            margin-left: 4px; 
+            left: 50%;
+            margin-left: 350px; /* 中心點向右偏移 */
             align-items: flex-start;
-            transform: translateY(-50%);
         }
 
         .cyber-box {
@@ -98,21 +90,22 @@
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 15px;
+            padding: 20px;
+            border-radius: 10px;
         }
 
         .box-label {
-            font-size: 14px;
+            font-size: 20px;
             color: #ff00ff;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             text-transform: uppercase;
             text-shadow: 2px 2px 0px #000;
             letter-spacing: 2px;
         }
 
         .preview-canvas {
-            width: 80px;
-            height: 80px;
+            width: 140px;
+            height: 140px;
             background: #000;
             border: 1px solid #333;
         }
@@ -126,11 +119,11 @@
 
         #next-box {
             border-color: #00ffff;
-            height: 380px; 
+            height: 650px; 
         }
 
-        #next-canvas-0 { width: 80px; height: 80px; margin-bottom: 15px; border: 1px solid #555; }
-        .small-next { width: 60px; height: 60px; margin-bottom: 5px; opacity: 0.6; }
+        #next-canvas-0 { width: 140px; height: 140px; margin-bottom: 25px; border: 1px solid #555; }
+        .small-next { width: 100px; height: 100px; margin-bottom: 15px; opacity: 0.6; }
 
         /* 分數顯示 */
         .score-container {
@@ -138,15 +131,15 @@
         }
 
         .score-label {
-            font-size: 16px;
+            font-size: 24px;
             color: #ff00ff;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
             text-shadow: 2px 2px 0 #000;
             display: block;
         }
 
         .score-box {
-            font-size: 48px; 
+            font-size: 72px; 
             color: #fff;
             text-shadow: 4px 4px 0px #ff00ff;
             line-height: 1;
@@ -155,13 +148,14 @@
 
         .controls-info {
             text-align: left;
-            font-size: 14px;
+            font-size: 18px;
             color: #0ff;
             line-height: 1.8;
             background: rgba(0, 0, 0, 0.8);
-            padding: 15px;
+            padding: 20px;
             border: 2px solid #0ff;
             box-shadow: 4px 4px 0px #000;
+            border-radius: 10px;
         }
 
         /* 模態視窗 */
@@ -171,19 +165,19 @@
             left: 50%;
             transform: translate(-50%, -50%);
             background: #000;
-            padding: 50px;
-            border: 4px solid #ff00ff;
-            box-shadow: 0 0 30px #ff00ff;
+            padding: 60px;
+            border: 6px solid #ff00ff;
+            box-shadow: 0 0 40px #ff00ff;
             z-index: 100;
             text-align: center;
-            min-width: 400px;
+            min-width: 500px;
         }
 
         h1 {
-            margin: 0 0 30px 0;
-            font-size: 48px;
+            margin: 0 0 40px 0;
+            font-size: 60px;
             color: #fff;
-            text-shadow: 4px 4px 0px #ff00ff;
+            text-shadow: 6px 6px 0px #ff00ff;
             text-transform: uppercase;
             line-height: 1.2;
         }
@@ -192,13 +186,13 @@
             background: #000;
             color: #0ff;
             border: 4px solid #0ff;
-            padding: 20px 40px;
-            font-size: 24px;
+            padding: 25px 50px;
+            font-size: 30px;
             font-family: 'Press Start 2P', cursive;
             cursor: pointer;
             text-transform: uppercase;
             box-shadow: 0 0 15px #0ff;
-            margin-top: 20px;
+            margin-top: 30px;
             transition: all 0.1s;
         }
 
@@ -208,46 +202,45 @@
             transform: scale(1.05);
         }
 
-        /* 虛擬按鍵：直向佈局 */
-        #mobile-controls {
-            display: flex; 
+        /* 虛擬按鍵：左右分離佈局 (手把風格) */
+        #virtual-controls {
+            display: flex;
             position: absolute;
-            bottom: 30px;
+            bottom: 60px;
             left: 0;
             width: 100%;
-            height: 220px; 
+            height: auto;
             z-index: 50;
             pointer-events: auto;
             justify-content: space-between;
-            padding: 0 40px; 
+            padding: 0 150px; /* 寬螢幕兩側留白 */
             box-sizing: border-box;
             align-items: flex-end; 
         }
 
         .d-pad { 
             display: grid;
-            grid-template-columns: 65px 65px 65px;
-            grid-template-rows: 65px 65px;
-            gap: 10px;
+            grid-template-columns: 90px 90px 90px;
+            grid-template-rows: 90px 90px;
+            gap: 15px;
             width: auto;
             height: auto;
-            margin-bottom: 20px;
         }
 
         .ctrl-btn {
-            width: 65px;
-            height: 65px;
+            width: 90px;
+            height: 90px;
             background: rgba(0, 0, 0, 0.6);
-            border-radius: 12px;
+            border-radius: 20px;
             border: 3px solid #0ff;
             color: #0ff;
-            font-size: 24px;
+            font-size: 36px;
             display: flex;
             justify-content: center;
             align-items: center;
             user-select: none;
             cursor: pointer;
-            box-shadow: 0 0 10px #0ff, inset 0 0 10px rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 15px #0ff, inset 0 0 10px rgba(0, 255, 255, 0.2);
             touch-action: manipulation;
             font-family: sans-serif;
             transition: all 0.1s;
@@ -256,7 +249,7 @@
         .ctrl-btn:active, .ctrl-btn.active {
             background: #0ff;
             color: #000;
-            box-shadow: 0 0 30px #0ff;
+            box-shadow: 0 0 40px #0ff;
             transform: scale(0.95);
         }
 
@@ -269,36 +262,37 @@
             grid-row: 1; 
             border-color: #ffcc00; 
             color: #ffcc00; 
-            box-shadow: 0 0 10px #ffcc00;
-            font-size: 16px;
+            box-shadow: 0 0 15px #ffcc00;
+            font-size: 24px;
             font-family: 'Press Start 2P', cursive;
         }
         
         #btn-hold:active, #btn-hold.active {
             background: #ffcc00;
             color: #000;
-            box-shadow: 0 0 30px #ffcc00;
+            box-shadow: 0 0 40px #ffcc00;
         }
         
         .action-pad { 
             position: relative; 
-            margin-bottom: 60px; 
+            margin-bottom: 50px; 
         }
 
         .btn-rotate { 
             border-color: #ff00ff; 
             color: #ff00ff; 
-            width: 90px; height: 90px; 
-            border-radius: 20px; 
-            font-size: 40px;
-            box-shadow: 0 0 15px #ff00ff;
+            width: 140px; height: 140px; 
+            border-radius: 30px; 
+            font-size: 60px;
+            box-shadow: 0 0 20px #ff00ff;
         }
         .btn-rotate:active, .btn-rotate.active {
             background: #ff00ff;
             color: #000;
-            box-shadow: 0 0 40px #ff00ff;
+            box-shadow: 0 0 50px #ff00ff;
         }
 
+        /* 動畫 */
         @keyframes scorePop {
             0% { transform: scale(1); }
             40% { transform: scale(1.3); }
@@ -333,9 +327,7 @@
         </div>
     </div>
 
-    <!-- 介面定位錨點 -->
-    <div id="board-area"></div>
-
+    <!-- 左側 Hold 面板 -->
     <div id="left-panel" class="side-panel">
         <div id="hold-box" class="cyber-box">
             <div class="box-label">HOLD</div>
@@ -343,6 +335,7 @@
         </div>
     </div>
 
+    <!-- 右側 Next 面板 -->
     <div id="right-panel" class="side-panel">
         <div id="next-box" class="cyber-box">
             <div class="box-label">NEXT</div>
@@ -359,16 +352,16 @@
         <button id="start-btn">INSERT COIN</button>
     </div>
 
-    <!-- 虛擬按鍵 -->
-    <div id="mobile-controls">
-        <!-- 左手控制區 -->
+    <!-- 虛擬按鍵 (左右分開) -->
+    <div id="virtual-controls">
+        <!-- 左手控制區 (移動 + Hold) -->
         <div class="d-pad">
             <div class="ctrl-btn btn-left" id="btn-left">◀</div>
             <div class="ctrl-btn" id="btn-hold">HOLD</div>
             <div class="ctrl-btn btn-right" id="btn-right">▶</div>
             <div class="ctrl-btn btn-down" id="btn-down">▼</div>
         </div>
-        <!-- 右手控制區 -->
+        <!-- 右手控制區 (旋轉) -->
         <div class="action-pad">
             <div class="ctrl-btn btn-rotate" id="btn-rotate">↻</div>
         </div>
@@ -378,17 +371,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
-    // 邏輯解析度 (直向 720x1280)
-    const LOGICAL_WIDTH = 720;
-    const LOGICAL_HEIGHT = 1280;
+    // 邏輯解析度 (1080p Landscape)
+    const LOGICAL_WIDTH = 1920;
+    const LOGICAL_HEIGHT = 1080;
 
     const BOARD_WIDTH = 14; 
     const BOARD_HEIGHT = 20;
     
     // Retro Neon Palette
     const COLORS = {
-        I: 0x00FFFF, J: 0x1E90FF, L: 0xFF8800, O: 0xFFFF00,
-        S: 0x00FF00, T: 0x9D00FF, Z: 0xFF0055
+        I: 0x00FFFF, // Cyan
+        J: 0x1E90FF, // Dodger Blue
+        L: 0xFF8800, // Orange
+        O: 0xFFFF00, // Yellow
+        S: 0x00FF00, // Green
+        T: 0x9D00FF, // Purple
+        Z: 0xFF0055  // Red/Pink
     };
 
     const TETROMINOS = {
@@ -440,6 +438,7 @@
         scene.background = new THREE.Color(0x000000); 
         scene.fog = new THREE.Fog(0x000000, 40, 100);  
 
+        // 攝影機設置 (寬螢幕視角)
         camera = new THREE.PerspectiveCamera(60, LOGICAL_WIDTH / LOGICAL_HEIGHT, 0.1, 1000);
         camera.position.set(0, 10, 24);
         camera.lookAt(0, 10, 0);
@@ -495,40 +494,12 @@
         backgroundGroup.userData.grid = gridHelper;
     }
 
-    function updateBoardLayout() {
-        const boardDiv = document.getElementById('board-area');
-        if (!boardDiv || !camera) return;
-
-        camera.updateMatrixWorld();
-
-        const topLeft = new THREE.Vector3(-7.6, 20.6, 0);
-        const bottomRight = new THREE.Vector3(7.6, -0.6, 0);
-
-        topLeft.project(camera);
-        bottomRight.project(camera);
-
-        const x1 = (topLeft.x * 0.5 + 0.5) * LOGICAL_WIDTH;
-        const y1 = (-(topLeft.y * 0.5) + 0.5) * LOGICAL_HEIGHT;
-        const x2 = (bottomRight.x * 0.5 + 0.5) * LOGICAL_WIDTH;
-        const y2 = (-(bottomRight.y * 0.5) + 0.5) * LOGICAL_HEIGHT;
-
-        const width = Math.abs(x2 - x1);
-        const height = Math.abs(y2 - y1);
-        const left = Math.min(x1, x2);
-        const top = Math.min(y1, y2);
-
-        boardDiv.style.width = width + 'px';
-        boardDiv.style.height = height + 'px';
-        boardDiv.style.left = left + 'px';
-        boardDiv.style.top = top + 'px';
-    }
-
     function initPreviewManager(containerId) {
         const container = document.getElementById(containerId);
         if(!container) return;
         
-        const width = 80;
-        const height = container.id.includes('small-next') ? 60 : 80;
+        const width = 140; // 放大預覽
+        const height = container.id.includes('small-next') ? 100 : 140;
 
         const pScene = new THREE.Scene();
         const pCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 50);
@@ -905,8 +876,6 @@
     function animate(time) {
         requestAnimationFrame(animate);
         
-        updateBoardLayout();
-
         const dt = (time - lastTime)/1000;
         const dtMs = time - lastTime;
         lastTime = time;
