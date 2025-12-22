@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D 俄羅斯方塊 (PC Cyberpunk)</title>
+    <title>3D 俄羅斯方塊 (Cyberpunk Vertical)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -13,24 +13,36 @@
             background-color: #000;
             font-family: 'Press Start 2P', cursive, 'Segoe UI', sans-serif;
             color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+            touch-action: none; 
         }
 
-        #game-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
+        /* 遊戲舞台：改回直向 720x1280 */
+        #game-stage {
+            position: relative;
+            width: 720px;
+            height: 1280px;
             background: radial-gradient(circle at center, #1a0b2e 0%, #000000 100%);
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.1);
+            transform-origin: center center;
         }
 
         #main-canvas {
             display: block;
             width: 100%;
             height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
         }
 
-        /* 左上角資訊區 */
+        /* UI 層 */
         #ui-layer {
             position: absolute;
             top: 30px;
@@ -43,16 +55,15 @@
             gap: 15px;
         }
 
-        /* 介面定位錨點 (跟隨 3D 盤面) */
+        /* 介面定位錨點 */
         #board-area {
             position: absolute;
-            top: 50%;
+            top: 45%; /* 稍微往上提，留空間給按鍵 */
             left: 50%;
-            width: 100px; /* JS update */
+            width: 100px;
             height: 100px;
             pointer-events: none;
             z-index: 10;
-            /* border: 1px solid red; */
         }
 
         .side-panel {
@@ -64,17 +75,17 @@
         }
 
         #left-panel {
-            top: 30%; 
+            top: 25%; 
             right: 100%; 
-            margin-right: 20px;
+            margin-right: 4px;
             align-items: flex-end;
             transform: translateY(-50%);
         }
 
         #right-panel {
-            top: 30%;
+            top: 25%;
             left: 100%; 
-            margin-left: 20px; 
+            margin-left: 4px; 
             align-items: flex-start;
             transform: translateY(-50%);
         }
@@ -100,8 +111,8 @@
         }
 
         .preview-canvas {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             background: #000;
             border: 1px solid #333;
         }
@@ -115,11 +126,11 @@
 
         #next-box {
             border-color: #00ffff;
-            height: 480px; 
+            height: 380px; 
         }
 
-        #next-canvas-0 { width: 100px; height: 100px; margin-bottom: 20px; border: 1px solid #555; }
-        .small-next { width: 70px; height: 70px; margin-bottom: 10px; opacity: 0.6; }
+        #next-canvas-0 { width: 80px; height: 80px; margin-bottom: 15px; border: 1px solid #555; }
+        .small-next { width: 60px; height: 60px; margin-bottom: 5px; opacity: 0.6; }
 
         /* 分數顯示 */
         .score-container {
@@ -197,7 +208,97 @@
             transform: scale(1.05);
         }
 
-        /* 動畫 */
+        /* 虛擬按鍵：直向佈局 */
+        #mobile-controls {
+            display: flex; 
+            position: absolute;
+            bottom: 30px;
+            left: 0;
+            width: 100%;
+            height: 220px; 
+            z-index: 50;
+            pointer-events: auto;
+            justify-content: space-between;
+            padding: 0 40px; 
+            box-sizing: border-box;
+            align-items: flex-end; 
+        }
+
+        .d-pad { 
+            display: grid;
+            grid-template-columns: 65px 65px 65px;
+            grid-template-rows: 65px 65px;
+            gap: 10px;
+            width: auto;
+            height: auto;
+            margin-bottom: 20px;
+        }
+
+        .ctrl-btn {
+            width: 65px;
+            height: 65px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 12px;
+            border: 3px solid #0ff;
+            color: #0ff;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+            cursor: pointer;
+            box-shadow: 0 0 10px #0ff, inset 0 0 10px rgba(0, 255, 255, 0.2);
+            touch-action: manipulation;
+            font-family: sans-serif;
+            transition: all 0.1s;
+        }
+
+        .ctrl-btn:active, .ctrl-btn.active {
+            background: #0ff;
+            color: #000;
+            box-shadow: 0 0 30px #0ff;
+            transform: scale(0.95);
+        }
+
+        .btn-left { grid-column: 1; grid-row: 1; }
+        .btn-right { grid-column: 3; grid-row: 1; }
+        .btn-down { grid-column: 2; grid-row: 2; }
+
+        #btn-hold { 
+            grid-column: 2; 
+            grid-row: 1; 
+            border-color: #ffcc00; 
+            color: #ffcc00; 
+            box-shadow: 0 0 10px #ffcc00;
+            font-size: 16px;
+            font-family: 'Press Start 2P', cursive;
+        }
+        
+        #btn-hold:active, #btn-hold.active {
+            background: #ffcc00;
+            color: #000;
+            box-shadow: 0 0 30px #ffcc00;
+        }
+        
+        .action-pad { 
+            position: relative; 
+            margin-bottom: 60px; 
+        }
+
+        .btn-rotate { 
+            border-color: #ff00ff; 
+            color: #ff00ff; 
+            width: 90px; height: 90px; 
+            border-radius: 20px; 
+            font-size: 40px;
+            box-shadow: 0 0 15px #ff00ff;
+        }
+        .btn-rotate:active, .btn-rotate.active {
+            background: #ff00ff;
+            color: #000;
+            box-shadow: 0 0 40px #ff00ff;
+        }
+
         @keyframes scorePop {
             0% { transform: scale(1); }
             40% { transform: scale(1.3); }
@@ -215,7 +316,7 @@
 </head>
 <body>
 
-<div id="game-container">
+<div id="game-stage">
     
     <div id="ui-layer">
         <div class="score-container">
@@ -224,9 +325,9 @@
         </div>
         
         <div class="controls-info">
-            [←][→] : MOVE<br>
-            [↑] : ROTATE<br>
-            [↓] : DROP<br>
+            [◀][▶][A][D] : MOVE<br>
+            [▲][W] : ROTATE<br>
+            [▼][S] : DROP<br>
             [SPACE] : HOLD<br>
             [P] : PAUSE
         </div>
@@ -235,7 +336,6 @@
     <!-- 介面定位錨點 -->
     <div id="board-area"></div>
 
-    <!-- 左側 Hold 面板 -->
     <div id="left-panel" class="side-panel">
         <div id="hold-box" class="cyber-box">
             <div class="box-label">HOLD</div>
@@ -243,7 +343,6 @@
         </div>
     </div>
 
-    <!-- 右側 Next 面板 -->
     <div id="right-panel" class="side-panel">
         <div id="next-box" class="cyber-box">
             <div class="box-label">NEXT</div>
@@ -260,24 +359,36 @@
         <button id="start-btn">INSERT COIN</button>
     </div>
 
-    <!-- Main Canvas will be injected here -->
+    <!-- 虛擬按鍵 -->
+    <div id="mobile-controls">
+        <!-- 左手控制區 -->
+        <div class="d-pad">
+            <div class="ctrl-btn btn-left" id="btn-left">◀</div>
+            <div class="ctrl-btn" id="btn-hold">HOLD</div>
+            <div class="ctrl-btn btn-right" id="btn-right">▶</div>
+            <div class="ctrl-btn btn-down" id="btn-down">▼</div>
+        </div>
+        <!-- 右手控制區 -->
+        <div class="action-pad">
+            <div class="ctrl-btn btn-rotate" id="btn-rotate">↻</div>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
+    // 邏輯解析度 (直向 720x1280)
+    const LOGICAL_WIDTH = 720;
+    const LOGICAL_HEIGHT = 1280;
+
     const BOARD_WIDTH = 14; 
     const BOARD_HEIGHT = 20;
     
-    // Retro Neon Palette - Adjusted for distinction
+    // Retro Neon Palette
     const COLORS = {
-        I: 0x00FFFF, // Cyan
-        J: 0x1E90FF, // Dodger Blue
-        L: 0xFF8800, // Orange
-        O: 0xFFFF00, // Yellow
-        S: 0x00FF00, // Green
-        T: 0x9D00FF, // Purple
-        Z: 0xFF0055  // Red/Pink
+        I: 0x00FFFF, J: 0x1E90FF, L: 0xFF8800, O: 0xFFFF00,
+        S: 0x00FF00, T: 0x9D00FF, Z: 0xFF0055
     };
 
     const TETROMINOS = {
@@ -308,20 +419,36 @@
 
     const previewManagers = {}; 
 
+    function resizeGame() {
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const scale = Math.min(windowWidth / LOGICAL_WIDTH, windowHeight / LOGICAL_HEIGHT);
+        
+        const stage = document.getElementById('game-stage');
+        stage.style.transform = `scale(${scale})`;
+
+        if(renderer) {
+            renderer.setPixelRatio(window.devicePixelRatio / scale);
+        }
+    }
+
     function init() {
+        resizeGame();
+        window.addEventListener('resize', resizeGame);
+
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000); 
         scene.fog = new THREE.Fog(0x000000, 40, 100);  
 
-        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera = new THREE.PerspectiveCamera(60, LOGICAL_WIDTH / LOGICAL_HEIGHT, 0.1, 1000);
         camera.position.set(0, 10, 24);
         camera.lookAt(0, 10, 0);
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(LOGICAL_WIDTH, LOGICAL_HEIGHT);
         renderer.shadowMap.enabled = true;
         renderer.domElement.id = 'main-canvas';
-        document.getElementById('game-container').appendChild(renderer.domElement);
+        document.getElementById('game-stage').appendChild(renderer.domElement);
 
         const ambient = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambient);
@@ -352,15 +479,15 @@
             }
         }, 100);
 
-        window.addEventListener('resize', onWindowResize, false);
         document.addEventListener('keydown', onKeyDown);
+        document.addEventListener('keyup', onKeyUp);
         document.getElementById('start-btn').onclick = onStartBtnClick;
+        setupMobileControls();
 
         animate(0);
     }
 
     function createBackgroundVisuals() {
-        // Retro Synthwave Grid
         const gridHelper = new THREE.GridHelper(200, 40, 0xff00ff, 0x220033);
         gridHelper.position.y = -30;
         gridHelper.position.z = -20;
@@ -374,17 +501,16 @@
 
         camera.updateMatrixWorld();
 
-        // 3D 盤面邊界投影
         const topLeft = new THREE.Vector3(-7.6, 20.6, 0);
         const bottomRight = new THREE.Vector3(7.6, -0.6, 0);
 
         topLeft.project(camera);
         bottomRight.project(camera);
 
-        const x1 = (topLeft.x * 0.5 + 0.5) * window.innerWidth;
-        const y1 = (-(topLeft.y * 0.5) + 0.5) * window.innerHeight;
-        const x2 = (bottomRight.x * 0.5 + 0.5) * window.innerWidth;
-        const y2 = (-(bottomRight.y * 0.5) + 0.5) * window.innerHeight;
+        const x1 = (topLeft.x * 0.5 + 0.5) * LOGICAL_WIDTH;
+        const y1 = (-(topLeft.y * 0.5) + 0.5) * LOGICAL_HEIGHT;
+        const x2 = (bottomRight.x * 0.5 + 0.5) * LOGICAL_WIDTH;
+        const y2 = (-(bottomRight.y * 0.5) + 0.5) * LOGICAL_HEIGHT;
 
         const width = Math.abs(x2 - x1);
         const height = Math.abs(y2 - y1);
@@ -401,9 +527,8 @@
         const container = document.getElementById(containerId);
         if(!container) return;
         
-        // 使用固定大小，因為容器是固定的
-        const width = 100; // or container.clientWidth
-        const height = container.id.includes('small-next') ? 70 : 100;
+        const width = 80;
+        const height = container.id.includes('small-next') ? 60 : 80;
 
         const pScene = new THREE.Scene();
         const pCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 50);
@@ -465,7 +590,6 @@
             mesh.position.set(x - cx, y - cy, 0);
             
             const edges = new THREE.EdgesGeometry(geometry);
-            // 預覽: 黑線
             const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, opacity: 1, transparent: true }));
             mesh.add(line);
             
@@ -482,14 +606,12 @@
     }
 
     function createBoardVisuals() {
-        // 外框 - 亮的青色
         const frameGeo = new THREE.BoxGeometry(BOARD_WIDTH + 0.5, BOARD_HEIGHT + 0.5, 1.5);
         const edges = new THREE.EdgesGeometry(frameGeo);
         const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x00ffff, opacity: 1.0, transparent: true }));
         line.position.set(0, BOARD_HEIGHT/2 - 0.5, 0); 
         scene.add(line);
 
-        // 背景網格 - 復古藍
         const gridMat = new THREE.LineBasicMaterial({ 
             color: 0x0044ff, 
             transparent: true, 
@@ -611,7 +733,7 @@
             const wy = activePiece.y + dy;
             mesh.position.set(wx, wy, 0);
             const edges = new THREE.EdgesGeometry(geometry);
-            // 落下中：黑線
+            // Black lines
             mesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, opacity: 1 })));
             activeGroup.add(mesh);
         });
@@ -683,7 +805,6 @@
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(x - BOARD_WIDTH/2 + 0.5, y, 0);
         const edges = new THREE.EdgesGeometry(geometry);
-        // 鎖定後：白線
         mesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({color:0xffffff, opacity:1})));
         boardGroup.add(mesh);
         boardMeshes[y][x] = mesh;
@@ -815,7 +936,6 @@
             }
         }
 
-        // Background Animation
         if(backgroundGroup && backgroundGroup.userData.grid) {
             const grid = backgroundGroup.userData.grid;
             grid.position.z += dt * 5; 
@@ -845,18 +965,41 @@
         });
     }
 
+    function toggleBtn(btnId, active) {
+        const el = document.getElementById(btnId);
+        if(el) {
+            if(active) el.classList.add('active');
+            else el.classList.remove('active');
+        }
+    }
+
     function onKeyDown(e) {
         if(e.code === 'Space') e.preventDefault(); 
+        
+        if(e.code === 'ArrowLeft' || e.code === 'KeyA') toggleBtn('btn-left', true);
+        if(e.code === 'ArrowRight' || e.code === 'KeyD') toggleBtn('btn-right', true);
+        if(e.code === 'ArrowDown' || e.code === 'KeyS') toggleBtn('btn-down', true);
+        if(e.code === 'ArrowUp' || e.code === 'KeyW') toggleBtn('btn-rotate', true);
+        if(e.code === 'Space') toggleBtn('btn-hold', true);
+
         if(isGameOver && e.code !== 'Space') return;
+        
         switch(e.code) {
-            case 'ArrowLeft': movePiece(-1, 0); break;
-            case 'ArrowRight': movePiece(1, 0); break;
-            case 'ArrowDown': movePiece(0, -1); dropCounter=0; break;
-            case 'ArrowUp': rotatePiece(); break;
+            case 'ArrowLeft': case 'KeyA': movePiece(-1, 0); break;
+            case 'ArrowRight': case 'KeyD': movePiece(1, 0); break;
+            case 'ArrowDown': case 'KeyS': movePiece(0, -1); dropCounter=0; break;
+            case 'ArrowUp': case 'KeyW': rotatePiece(); break;
             case 'Space': triggerHold(); break;
-            case 'KeyP': 
-            case 'Escape': togglePause(); break;
+            case 'KeyP': case 'Escape': togglePause(); break;
         }
+    }
+
+    function onKeyUp(e) {
+        if(e.code === 'ArrowLeft' || e.code === 'KeyA') toggleBtn('btn-left', false);
+        if(e.code === 'ArrowRight' || e.code === 'KeyD') toggleBtn('btn-right', false);
+        if(e.code === 'ArrowDown' || e.code === 'KeyS') toggleBtn('btn-down', false);
+        if(e.code === 'ArrowUp' || e.code === 'KeyW') toggleBtn('btn-rotate', false);
+        if(e.code === 'Space') toggleBtn('btn-hold', false);
     }
 
     function togglePause() {
@@ -883,10 +1026,28 @@
         document.getElementById('modal').style.display = 'none';
     }
 
+    function setupMobileControls() {
+        const bind = (id, fn) => {
+            const el = document.getElementById(id);
+            if(el) {
+                el.addEventListener('pointerdown', (e) => {
+                    e.preventDefault();
+                    el.classList.add('active');
+                    fn();
+                });
+                el.addEventListener('pointerup', () => el.classList.remove('active'));
+                el.addEventListener('pointerleave', () => el.classList.remove('active'));
+            }
+        };
+        bind('btn-left', () => movePiece(-1, 0));
+        bind('btn-right', () => movePiece(1, 0));
+        bind('btn-down', () => { movePiece(0, -1); dropCounter=0; });
+        bind('btn-rotate', () => rotatePiece());
+        bind('btn-hold', () => triggerHold());
+    }
+
     function onWindowResize() {
-        camera.aspect = window.innerWidth / window.innerHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        resizeGame();
     }
 
     init();
