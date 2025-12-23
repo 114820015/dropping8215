@@ -5,20 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>3D 俄羅斯方塊 (Cyberpunk Extended)</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #050505;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #000;
+            font-family: 'Press Start 2P', cursive, 'Segoe UI', sans-serif;
             color: #e0e0e0;
             touch-action: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
         }
 
-        #game-container {
+        /* 遊戲舞台：固定比例 720x1280，由 JS 控制縮放 */
+        #game-stage {
             position: relative;
-            width: 100vw;
-            height: 100vh;
+            width: 720px;
+            height: 1280px;
+            /* 修改：背景改為純黑，拿掉原本的漸層 */
             background-color: #000;
+            overflow: hidden;
+            /* 稍微保留一點外框光暈，增加邊界感，但內部全黑 */
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1); 
+            transform-origin: center center;
         }
 
         #main-canvas {
@@ -31,14 +44,17 @@
             z-index: 1;
         }
 
+        /* UI 層 */
         #ui-layer {
             position: absolute;
             top: 30px;
-            left: 0;
-            width: 100%;
-            text-align: center;
+            left: 30px;
             pointer-events: none;
             z-index: 20;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 15px;
         }
 
         /* 介面定位錨點 */
@@ -68,15 +84,16 @@
             transform: translateY(-50%);
         }
 
+        /* 修改：右側 Next 面板下移 (top: 25% -> 40%) */
         #right-panel {
-            top: 25%;
+            top: 40%;
             left: 100%; 
             margin-left: 4px; 
             align-items: flex-start;
             transform: translateY(-50%);
         }
 
-        /* 還原：流線型霓虹框 */
+        /* 流線型霓虹框 */
         .cyber-box {
             background: rgba(0, 10, 20, 0.85);
             border: 2px solid #0ff;
@@ -156,19 +173,6 @@
             transition: color 0.1s;
         }
 
-        .controls-info {
-            position: static; 
-            text-align: left;
-            font-size: 12px;
-            color: #aaa;
-            line-height: 1.5;
-            background: rgba(0, 10, 20, 0.5);
-            padding: 10px;
-            border-radius: 5px;
-            border-left: 2px solid #0ff;
-            backdrop-filter: blur(2px);
-        }
-
         @keyframes scorePop {
             0% { transform: scale(1); }
             40% { transform: scale(1.5); }
@@ -239,8 +243,9 @@
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
         }
 
+        /* 修改：手機按鍵設定為 flex 顯示 (不再是 display: none) */
         #mobile-controls {
-            display: none;
+            display: flex;
             position: absolute;
             bottom: 20px;
             left: 0;
@@ -279,6 +284,7 @@
             cursor: pointer;
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
             touch-action: manipulation;
+            font-family: sans-serif;
         }
 
         .ctrl-btn:active, .ctrl-btn.active {
@@ -296,77 +302,78 @@
             border-color: #ffff00; 
             color: #ffff00; 
             box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
+            font-size: 12px;
+            font-family: 'Press Start 2P', cursive;
         }
         
         #btn-hold:active, #btn-hold.active {
-            background: rgba(255, 255, 0, 0.3);
+            background: rgba(255, 204, 0, 0.3);
         }
         
         .action-pad { 
             position: relative; 
-            margin-bottom: 40px; 
+            margin-bottom: 60px; 
         }
 
-        .btn-rotate { border-color: #f0f; color: #f0f; width: 65px; height: 65px; border-radius: 15px; font-size: 24px;}
-
-        @media (max-width: 768px) {
-            #mobile-controls { display: flex; }
-            .controls-info { display: none; }
-            #left-panel { right: 100%; margin-right: 2px; transform: scale(0.7) translateY(-50%); }
-            #right-panel { left: 100%; margin-left: 2px; transform: scale(0.7) translateY(-50%); }
-            .score-box { font-size: 32px; }
-            h1 { font-size: 32px; }
+        .btn-rotate { 
+            border-color: #ff00ff; 
+            color: #ff00ff; 
+            width: 80px; height: 80px; 
+            border-radius: 18px; 
+            font-size: 30px;
+            box-shadow: 0 0 5px #ff00ff;
         }
+        .btn-rotate:active, .btn-rotate.active {
+            background: rgba(255, 0, 255, 0.4);
+        }
+
     </style>
 </head>
 <body>
 
-<div id="game-container">
+<div id="game-stage">
+    
     <div id="ui-layer">
         <div class="score-container">
             <span class="score-label">SCORE</span>
             <div id="score-box-div" class="score-box"><span id="score" class="score-value">0</span></div>
         </div>
         
-        <div class="controls-info">
-            ← → : 移動<br>
-            ↑ : 旋轉<br>
-            ↓ : 加速<br>
-            SPACE : HOLD<br>
-            P : 暫停
+        <!-- 已移除說明欄 -->
+    </div>
+
+    <!-- 左側 Hold 面板 -->
+    <div id="left-panel" class="side-panel">
+        <div id="hold-box" class="cyber-box">
+            <div class="box-label">HOLD</div>
+            <div id="hold-canvas-container" class="preview-canvas"></div>
         </div>
     </div>
 
-    <!-- 介面排版錨點 -->
-    <div id="board-area">
-        <div id="left-panel" class="side-panel">
-            <div id="hold-box" class="cyber-box">
-                <div class="box-label">HOLD</div>
-                <div id="hold-canvas-container" class="preview-canvas"></div>
-            </div>
-        </div>
-
-        <div id="right-panel" class="side-panel">
-            <div id="next-box" class="cyber-box">
-                <div class="box-label">NEXT</div>
-                <div id="next-canvas-0" class="preview-canvas"></div>
-                <div id="next-canvas-1" class="preview-canvas small-next"></div>
-                <div id="next-canvas-2" class="preview-canvas small-next"></div>
-                <div id="next-canvas-3" class="preview-canvas small-next"></div>
-            </div>
+    <!-- 右側 Next 面板 -->
+    <div id="right-panel" class="side-panel">
+        <div id="next-box" class="cyber-box">
+            <div class="box-label">NEXT</div>
+            <div id="next-canvas-0" class="preview-canvas"></div>
+            <div id="next-canvas-1" class="preview-canvas small-next"></div>
+            <div id="next-canvas-2" class="preview-canvas small-next"></div>
+            <div id="next-canvas-3" class="preview-canvas small-next"></div>
         </div>
     </div>
+
+    <!-- 介面定位錨點 -->
+    <div id="board-area"></div>
 
     <div id="modal">
         <h1 id="modal-title">CYBER TETRIS</h1>
-        <p id="final-score" style="display:none; color: #fff; margin-bottom: 20px; font-size: 20px;">SCORE: 0</p>
-        <button id="start-btn">START GAME</button>
+        <p id="final-score" style="display:none; color: #fff; margin-bottom: 20px; font-size: 16px;">SCORE: 0</p>
+        <button id="start-btn">INSERT COIN</button>
     </div>
 
     <div id="mobile-controls">
         <div class="d-pad">
             <div class="ctrl-btn btn-left" id="btn-left">←</div>
-            <div class="ctrl-btn" id="btn-hold" style="font-size: 14px;">HOLD</div>
+            <div class="ctrl-btn" id="btn-hold">HOLD</div>
             <div class="ctrl-btn btn-right" id="btn-right">→</div>
             <div class="ctrl-btn btn-down" id="btn-down">↓</div>
         </div>
@@ -379,18 +386,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
+    // 邏輯解析度 (Fixed Layout)
+    const LOGICAL_WIDTH = 720;
+    const LOGICAL_HEIGHT = 1280;
+
     const BOARD_WIDTH = 14; 
     const BOARD_HEIGHT = 20;
     
-    // Distinct Neon Colors
+    // Vibrant Neon Palette - Distinct Colors
     const COLORS = {
         I: 0x00FFFF, // Cyan
         J: 0x1E90FF, // Dodger Blue
         L: 0xFF8800, // Orange
         O: 0xFFFF00, // Yellow
-        S: 0x32CD32, // Lime Green
-        T: 0x9D00FF, // Electric Purple
-        Z: 0xFF0055  // Neon Red
+        S: 0x00FF00, // Green
+        T: 0x9D00FF, // Purple
+        Z: 0xFF0055  // Red/Pink
     };
 
     const TETROMINOS = {
@@ -404,7 +415,7 @@
     };
 
     let scene, camera, renderer;
-    let boardGroup, activeGroup, particleGroup, backgroundGroup;
+    let boardGroup, activeGroup, particleGroup;
     let board = [], boardMeshes = []; 
     let activePiece = null;
     let particles = [];
@@ -421,27 +432,43 @@
 
     const previewManagers = {}; 
 
-    function init() {
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050510); // 深藍紫背景
-        // 還原霧氣設定：看得見背景
-        scene.fog = new THREE.Fog(0x050510, 50, 200);  
+    // --- 畫面縮放 ---
+    function resizeGame() {
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        const scale = Math.min(windowWidth / LOGICAL_WIDTH, windowHeight / LOGICAL_HEIGHT);
+        
+        const stage = document.getElementById('game-stage');
+        stage.style.transform = `scale(${scale})`;
 
-        camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        if(renderer) {
+            renderer.setPixelRatio(window.devicePixelRatio / scale);
+        }
+    }
+
+    function init() {
+        resizeGame();
+        window.addEventListener('resize', resizeGame);
+
+        scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000); 
+        // 移除霧氣以保持背景純黑
+        // scene.fog = new THREE.Fog(0x000000, 40, 100);  
+
+        camera = new THREE.PerspectiveCamera(60, LOGICAL_WIDTH / LOGICAL_HEIGHT, 0.1, 1000);
         camera.position.set(0, 10, 24);
         camera.lookAt(0, 10, 0);
 
         renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(LOGICAL_WIDTH, LOGICAL_HEIGHT);
         renderer.shadowMap.enabled = true;
         renderer.domElement.id = 'main-canvas';
-        document.getElementById('game-container').appendChild(renderer.domElement);
+        document.getElementById('game-stage').appendChild(renderer.domElement);
 
-        // 還原光照設定
-        const ambient = new THREE.AmbientLight(0x404040, 1.5);
+        const ambient = new THREE.AmbientLight(0xffffff, 0.8);
         scene.add(ambient);
-        const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-        dirLight.position.set(10, 20, 10);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        dirLight.position.set(5, 20, 10);
         scene.add(dirLight);
         const spotLight = new THREE.SpotLight(0x00ffff, 0.5);
         spotLight.position.set(0, 30, 0);
@@ -450,15 +477,14 @@
         boardGroup = new THREE.Group();
         activeGroup = new THREE.Group();
         particleGroup = new THREE.Group();
-        backgroundGroup = new THREE.Group(); 
+        // 移除了 backgroundGroup
         
-        scene.add(backgroundGroup);
         scene.add(boardGroup);
         scene.add(activeGroup);
         scene.add(particleGroup);
 
         createBoardVisuals();
-        createBackgroundVisuals(); // 還原背景特效
+        // createBackgroundVisuals(); // 移除了背景特效
 
         setTimeout(() => {
             initPreviewManager('hold-canvas-container');
@@ -467,62 +493,12 @@
             }
         }, 100);
 
-        window.addEventListener('resize', onWindowResize, false);
         document.addEventListener('keydown', onKeyDown);
+        document.addEventListener('keyup', onKeyUp);
         document.getElementById('start-btn').onclick = onStartBtnClick;
         setupMobileControls();
 
         animate(0);
-    }
-
-    // 還原：豐富的背景特效
-    function createBackgroundVisuals() {
-        // 1. 動態網格地平線
-        const bgGrid = new THREE.GridHelper(400, 40, 0xaa00aa, 0x1a1a40);
-        bgGrid.position.y = -35; 
-        bgGrid.position.z = -50; 
-        backgroundGroup.add(bgGrid);
-        backgroundGroup.userData.grid = bgGrid;
-
-        // 2. 漂浮霓虹幾何體
-        const geometries = [
-            new THREE.IcosahedronGeometry(2, 0), 
-            new THREE.BoxGeometry(2, 2, 2),
-            new THREE.TorusGeometry(3, 0.2, 8, 50),
-            new THREE.OctahedronGeometry(2)
-        ];
-        
-        const materials = [
-            new THREE.MeshBasicMaterial({ color: 0x4466ff, wireframe: true, transparent: true, opacity: 0.3 }), 
-            new THREE.MeshBasicMaterial({ color: 0xff33ff, wireframe: true, transparent: true, opacity: 0.3 }), 
-            new THREE.MeshBasicMaterial({ color: 0x00ffff, wireframe: true, transparent: true, opacity: 0.3 })  
-        ];
-
-        backgroundGroup.userData.floaters = [];
-
-        for(let i=0; i<40; i++) { 
-            const geo = geometries[Math.floor(Math.random() * geometries.length)];
-            const mat = materials[Math.floor(Math.random() * materials.length)];
-            const mesh = new THREE.Mesh(geo, mat);
-            
-            mesh.position.set(
-                (Math.random() - 0.5) * 180,
-                (Math.random() - 0.5) * 100,
-                -40 - Math.random() * 60 
-            );
-            
-            const scale = 1.5 + Math.random() * 3;
-            mesh.scale.set(scale, scale, scale);
-
-            mesh.userData = {
-                rotX: (Math.random() - 0.5) * 0.01,
-                rotY: (Math.random() - 0.5) * 0.01,
-                floatSpeed: (Math.random() * 0.03) + 0.01
-            };
-
-            backgroundGroup.add(mesh);
-            backgroundGroup.userData.floaters.push(mesh);
-        }
     }
 
     function updateBoardLayout() {
@@ -537,10 +513,10 @@
         topLeft.project(camera);
         bottomRight.project(camera);
 
-        const x1 = (topLeft.x * 0.5 + 0.5) * window.innerWidth;
-        const y1 = (-(topLeft.y * 0.5) + 0.5) * window.innerHeight;
-        const x2 = (bottomRight.x * 0.5 + 0.5) * window.innerWidth;
-        const y2 = (-(bottomRight.y * 0.5) + 0.5) * window.innerHeight;
+        const x1 = (topLeft.x * 0.5 + 0.5) * LOGICAL_WIDTH;
+        const y1 = (-(topLeft.y * 0.5) + 0.5) * LOGICAL_HEIGHT;
+        const x2 = (bottomRight.x * 0.5 + 0.5) * LOGICAL_WIDTH;
+        const y2 = (-(bottomRight.y * 0.5) + 0.5) * LOGICAL_HEIGHT;
 
         const width = Math.abs(x2 - x1);
         const height = Math.abs(y2 - y1);
@@ -558,8 +534,8 @@
         const container = document.getElementById(containerId);
         if(!container) return;
         
-        const width = container.clientWidth || 80;
-        const height = container.clientHeight || (container.className.includes('small-next') ? 60 : 80);
+        const width = 80;
+        const height = container.id.includes('next-canvas-0') || container.id.includes('hold') ? 80 : 60;
 
         const pScene = new THREE.Scene();
         const pCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 50);
@@ -758,8 +734,8 @@
         const material = new THREE.MeshStandardMaterial({ 
             color: activePiece.color, 
             emissive: activePiece.color,
-            emissiveIntensity: 0.5,
-            roughness: 0.1, metalness: 0.5 
+            emissiveIntensity: 0.6,
+            roughness: 0.1, metalness: 0.1 
         });
         activePiece.shape.forEach(([dx, dy]) => {
             const mesh = new THREE.Mesh(geometry, material);
@@ -833,8 +809,8 @@
     function addStaticBlock(x, y, color) {
         const geometry = new THREE.BoxGeometry(0.85, 0.85, 0.85);
         const material = new THREE.MeshStandardMaterial({ 
-            color: color, emissive: color, emissiveIntensity: 0.3,
-            roughness: 0.3, metalness: 0.2 
+            color: color, emissive: color, emissiveIntensity: 0.4,
+            roughness: 0.3, metalness: 0.1 
         });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.position.set(x - BOARD_WIDTH/2 + 0.5, y, 0);
@@ -893,7 +869,6 @@
         level = Math.floor(score/1000) + 1;
         updateUI();
         
-        // Trigger Animation
         const scoreBox = document.getElementById('score-box-div');
         if(scoreBox) {
             scoreBox.classList.remove('score-anim');
@@ -974,21 +949,6 @@
             }
         }
 
-        // Background Animation
-        if(backgroundGroup && backgroundGroup.userData.grid) {
-            const grid = backgroundGroup.userData.grid;
-            grid.position.z += dt * 2; 
-            if(grid.position.z > -10) grid.position.z = -50; 
-        }
-
-        if(backgroundGroup && backgroundGroup.userData.floaters) {
-            backgroundGroup.userData.floaters.forEach(mesh => {
-                mesh.rotation.x += mesh.userData.rotX;
-                mesh.rotation.y += mesh.userData.rotY;
-                mesh.position.y += Math.sin(time * 0.0005 * mesh.userData.floatSpeed) * 0.01;
-            });
-        }
-
         if(shakeIntensity > 0) {
             camera.position.set(
                 (Math.random()-.5)*shakeIntensity, 
@@ -1012,18 +972,41 @@
         });
     }
 
+    function toggleBtn(btnId, active) {
+        const el = document.getElementById(btnId);
+        if(el) {
+            if(active) el.classList.add('active');
+            else el.classList.remove('active');
+        }
+    }
+
     function onKeyDown(e) {
         if(e.code === 'Space') e.preventDefault(); 
+        
+        if(e.code === 'ArrowLeft' || e.code === 'KeyA') toggleBtn('btn-left', true);
+        if(e.code === 'ArrowRight' || e.code === 'KeyD') toggleBtn('btn-right', true);
+        if(e.code === 'ArrowDown' || e.code === 'KeyS') toggleBtn('btn-down', true);
+        if(e.code === 'ArrowUp' || e.code === 'KeyW') toggleBtn('btn-rotate', true);
+        if(e.code === 'Space') toggleBtn('btn-hold', true);
+
         if(isGameOver && e.code !== 'Space') return;
+        
         switch(e.code) {
-            case 'ArrowLeft': movePiece(-1, 0); break;
-            case 'ArrowRight': movePiece(1, 0); break;
-            case 'ArrowDown': movePiece(0, -1); dropCounter=0; break;
-            case 'ArrowUp': rotatePiece(); break;
+            case 'ArrowLeft': case 'KeyA': movePiece(-1, 0); break;
+            case 'ArrowRight': case 'KeyD': movePiece(1, 0); break;
+            case 'ArrowDown': case 'KeyS': movePiece(0, -1); dropCounter=0; break;
+            case 'ArrowUp': case 'KeyW': rotatePiece(); break;
             case 'Space': triggerHold(); break;
-            case 'KeyP': 
-            case 'Escape': togglePause(); break;
+            case 'KeyP': case 'Escape': togglePause(); break;
         }
+    }
+
+    function onKeyUp(e) {
+        if(e.code === 'ArrowLeft' || e.code === 'KeyA') toggleBtn('btn-left', false);
+        if(e.code === 'ArrowRight' || e.code === 'KeyD') toggleBtn('btn-right', false);
+        if(e.code === 'ArrowDown' || e.code === 'KeyS') toggleBtn('btn-down', false);
+        if(e.code === 'ArrowUp' || e.code === 'KeyW') toggleBtn('btn-rotate', false);
+        if(e.code === 'Space') toggleBtn('btn-hold', false);
     }
 
     function togglePause() {
