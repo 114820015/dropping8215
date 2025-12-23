@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D 俄羅斯方塊 (PC Arcade Fixed)</title>
+    <title>3D 俄羅斯方塊 (Final Fix)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -13,29 +13,23 @@
             background-color: #000;
             font-family: 'Press Start 2P', cursive, 'Segoe UI', sans-serif;
             color: #e0e0e0;
-            width: 100vw;
-            height: 100vh;
-            touch-action: none; 
             display: flex;
             justify-content: center;
             align-items: center;
+            height: 100vh;
+            width: 100vw;
+            touch-action: none; 
         }
 
-        /* 遊戲舞台：固定 1920x1080 解析度 */
+        /* 遊戲舞台：固定 720x1280 (直向) */
         #game-stage {
-            position: absolute;
-            width: 1920px;
-            height: 1080px;
-            background-color: #000;
-            /* 修改：允許溢出，避免面板邊緣被切掉 */
-            overflow: visible; 
-            box-shadow: 0 0 50px rgba(0, 255, 255, 0.05);
-            /* 縮放中心 */
+            position: relative;
+            width: 720px;
+            height: 1280px;
+            background-color: #000; /* 純黑背景 */
+            overflow: visible; /* 允許 UI 溢出 */
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1); 
             transform-origin: center center;
-            /* 初始位置置中 */
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%); 
         }
 
         #main-canvas {
@@ -51,8 +45,8 @@
         /* UI 層 */
         #ui-layer {
             position: absolute;
-            top: 40px;
-            left: 40px;
+            top: 30px;
+            left: 30px;
             pointer-events: none;
             z-index: 20;
             display: flex;
@@ -61,14 +55,13 @@
             gap: 15px;
         }
 
-        /* 介面定位錨點 - 跟隨 3D 投影 */
+        /* 介面定位錨點 - 這會由 JS 動態調整大小 */
         #board-area {
             position: absolute;
-            /* 預設值，會被 JS 覆蓋 */
             top: 50%;
             left: 50%;
-            width: 500px; 
-            height: 800px;
+            width: 100px;
+            height: 100px;
             pointer-events: none;
             z-index: 10;
             /* border: 2px solid red; // 開啟可除錯位置 */
@@ -82,86 +75,92 @@
             pointer-events: none;
         }
 
-        /* 左側面板：貼在 board-area 的左邊 */
+        /* 左側 Hold 面板：定位於 Board Area 左邊 */
         #left-panel {
-            top: 30%; 
+            top: 25%; 
             right: 100%; 
-            margin-right: 0px; /* 緊貼 */
-            align-items: flex-end; /* 靠右對齊 (靠向盤面) */
+            margin-right: 0px; 
+            align-items: flex-end;
             transform: translateY(-50%);
         }
 
-        /* 右側面板：貼在 board-area 的右邊 */
+        /* 右側 Next 面板：定位於 Board Area 右邊 (下移至 40%) */
         #right-panel {
             top: 40%;
             left: 100%; 
-            margin-left: 0px; /* 緊貼 */
-            align-items: flex-start; /* 靠左對齊 (靠向盤面) */
+            margin-left: 0px; 
+            align-items: flex-start;
             transform: translateY(-50%);
         }
 
         .cyber-box {
-            background: rgba(0, 0, 0, 0.85);
-            border: 4px solid #0ff;
-            box-shadow: 0 0 15px #0ff, inset 0 0 10px rgba(0, 255, 255, 0.2);
+            background: rgba(0, 10, 20, 0.85);
+            border: 2px solid #0ff;
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 15px;
-            border-radius: 10px;
+            padding: 10px;
+            backdrop-filter: blur(4px);
         }
 
         .box-label {
-            font-size: 16px;
+            font-size: 14px;
             color: #f0f;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-transform: uppercase;
-            text-shadow: 2px 2px 0px #000;
             letter-spacing: 2px;
+            text-shadow: 0 0 5px #f0f;
             font-weight: bold;
         }
 
         .preview-canvas {
-            width: 100px;
-            height: 100px;
-            background: #000;
-            border: 1px solid #333;
+            width: 80px;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 4px;
         }
 
         #hold-box {
-            width: 120px;
-            height: 140px;
+            width: 100px;
+            height: 120px;
             border-color: #ffff00;
-            box-shadow: 0 0 15px #ffff00, inset 0 0 10px rgba(255, 204, 0, 0.2);
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.2);
         }
         
-        #hold-box .box-label { color: #ffff00; text-shadow: 0 0 5px #ffff00; }
-
-        #next-box {
-            width: 120px;
-            height: 480px; 
-            border-color: #00ffff;
+        #hold-box .box-label {
+            color: #ffff00;
+            text-shadow: 0 0 5px #ffff00;
         }
 
-        #next-canvas-0 { width: 100px; height: 100px; margin-bottom: 20px; border: 1px solid #555; }
-        .small-next { width: 70px; height: 70px; margin-bottom: 10px; opacity: 0.6; }
+        #next-box {
+            width: 100px;
+            height: 380px; 
+        }
 
-        .score-container { margin-bottom: 15px; }
+        #next-canvas-0 { width: 80px; height: 80px; margin-bottom: 15px; border: 1px solid rgba(0,255,255,0.3); }
+        .small-next { width: 60px; height: 60px; margin-bottom: 5px; opacity: 0.8; }
+
+        .score-container {
+            margin-bottom: 15px;
+        }
 
         .score-label {
-            font-size: 20px;
-            color: #ff00ff;
+            font-size: 16px;
+            color: #888;
+            font-weight: bold;
+            letter-spacing: 2px;
             margin-bottom: 5px;
-            text-shadow: 2px 2px 0 #000;
             display: block;
         }
 
         .score-box {
-            font-size: 64px; 
+            font-size: 48px; 
             font-weight: 900;
             font-family: 'Courier New', Courier, monospace;
-            text-shadow: 4px 4px 0px #ff00ff;
+            text-shadow: 4px 4px 0px rgba(0,0,0,0.8);
             line-height: 1;
             display: inline-block; 
             transform-origin: left center;
@@ -178,31 +177,41 @@
             40% { transform: scale(1.5); }
             100% { transform: scale(1); }
         }
+
         @keyframes scoreGlow {
             0% { color: #0ff; text-shadow: 0 0 15px #0ff; }
             30% { color: #fff; text-shadow: 0 0 30px #fff, 0 0 50px #0ff; } 
             100% { color: #0ff; text-shadow: 0 0 15px #0ff; }
         }
-        .score-anim { animation: scorePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        .score-anim .score-value { animation: scoreGlow 0.3s ease-out; }
+
+        .score-anim {
+            animation: scorePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .score-anim .score-value {
+            animation: scoreGlow 0.3s ease-out;
+        }
 
         #modal {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #000;
-            padding: 60px;
-            border: 4px solid #ff00ff;
-            box-shadow: 0 0 50px #ff00ff;
-            z-index: 100;
+            background: rgba(10, 10, 15, 0.95);
+            padding: 40px;
+            border-radius: 5px;
             text-align: center;
-            min-width: 400px;
+            border: 2px solid #f0f;
+            box-shadow: 0 0 50px rgba(255, 0, 255, 0.5);
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            pointer-events: auto;
+            min-width: 300px;
         }
 
         h1 {
-            margin: 0 0 30px 0;
-            font-size: 48px;
+            margin: 0 0 20px 0;
+            font-size: 42px;
             background: linear-gradient(90deg, #0ff, #f0f);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -212,19 +221,19 @@
         }
 
         button {
-            background: #000;
+            background: transparent;
             color: #0ff;
-            border: 4px solid #0ff;
-            padding: 20px 40px;
-            font-size: 24px;
-            border-radius: 10px;
+            border: 2px solid #0ff;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 5px;
             cursor: pointer;
             font-weight: bold;
             transition: all 0.2s;
             text-transform: uppercase;
             letter-spacing: 2px;
             box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
-            margin-top: 30px;
+            margin-top: 20px;
         }
 
         button:hover {
@@ -237,50 +246,48 @@
         #mobile-controls {
             display: flex;
             position: absolute;
-            bottom: 60px;
+            bottom: 20px;
             left: 0;
             width: 100%;
-            height: auto;
+            height: 180px; 
             z-index: 50;
             pointer-events: auto;
             justify-content: space-between;
-            padding: 0 100px; 
+            padding: 0 40px; 
             box-sizing: border-box;
             align-items: flex-end; 
         }
 
         .d-pad { 
             display: grid;
-            grid-template-columns: 80px 80px 80px;
-            grid-template-rows: 80px 80px;
-            gap: 10px;
+            grid-template-columns: 50px 50px 50px;
+            grid-template-rows: 50px 50px;
+            gap: 5px;
             width: auto;
             height: auto;
+            margin-bottom: 20px;
         }
 
         .ctrl-btn {
-            width: 80px;
-            height: 80px;
+            width: 50px;
+            height: 50px;
             background: rgba(0, 255, 255, 0.1);
-            border-radius: 15px;
-            border: 3px solid #0ff;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.5);
             color: #0ff;
-            font-size: 30px;
+            font-size: 18px;
             display: flex;
             justify-content: center;
             align-items: center;
             user-select: none;
             cursor: pointer;
-            box-shadow: 0 0 10px #0ff, inset 0 0 10px rgba(0, 255, 255, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.1);
             touch-action: manipulation;
             font-family: sans-serif;
-            transition: all 0.1s;
         }
 
         .ctrl-btn:active, .ctrl-btn.active {
-            background: #0ff;
-            color: #000;
-            box-shadow: 0 0 40px #0ff;
+            background: rgba(0, 255, 255, 0.4);
             transform: scale(0.95);
         }
 
@@ -291,35 +298,32 @@
         #btn-hold { 
             grid-column: 2; 
             grid-row: 1; 
-            border-color: #ffcc00; 
-            color: #ffcc00; 
-            box-shadow: 0 0 10px #ffcc00;
-            font-size: 20px;
+            border-color: #ffff00; 
+            color: #ffff00; 
+            box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
+            font-size: 12px;
             font-family: 'Press Start 2P', cursive;
         }
         
         #btn-hold:active, #btn-hold.active {
-            background: #ffcc00;
-            color: #000;
-            box-shadow: 0 0 40px #ffcc00;
+            background: rgba(255, 204, 0, 0.3);
         }
         
         .action-pad { 
             position: relative; 
+            margin-bottom: 40px; 
         }
 
         .btn-rotate { 
             border-color: #ff00ff; 
             color: #ff00ff; 
-            width: 120px; height: 120px; 
-            border-radius: 25px; 
-            font-size: 50px;
-            box-shadow: 0 0 20px #ff00ff;
+            width: 80px; height: 80px; 
+            border-radius: 18px; 
+            font-size: 30px;
+            box-shadow: 0 0 5px #ff00ff;
         }
         .btn-rotate:active, .btn-rotate.active {
-            background: #ff00ff;
-            color: #000;
-            box-shadow: 0 0 50px #ff00ff;
+            background: rgba(255, 0, 255, 0.4);
         }
 
     </style>
@@ -356,17 +360,17 @@
     </div>
 
     <div id="modal">
-        <h1 id="modal-title">NEON TETRIS</h1>
-        <p id="final-score" style="display:none; color: #fff; margin-bottom: 30px; font-size: 24px;">SCORE: 0</p>
-        <button id="start-btn">INSERT COIN</button>
+        <h1 id="modal-title">CYBER TETRIS</h1>
+        <p id="final-score" style="display:none; color: #fff; margin-bottom: 20px; font-size: 16px;">SCORE: 0</p>
+        <button id="start-btn">START GAME</button>
     </div>
 
     <div id="mobile-controls">
         <div class="d-pad">
-            <div class="ctrl-btn btn-left" id="btn-left">◀</div>
-            <div class="ctrl-btn" id="btn-hold">HOLD</div>
-            <div class="ctrl-btn btn-right" id="btn-right">▶</div>
-            <div class="ctrl-btn btn-down" id="btn-down">▼</div>
+            <div class="ctrl-btn btn-left" id="btn-left">←</div>
+            <div class="ctrl-btn" id="btn-hold" style="font-size: 14px;">HOLD</div>
+            <div class="ctrl-btn btn-right" id="btn-right">→</div>
+            <div class="ctrl-btn btn-down" id="btn-down">↓</div>
         </div>
         <div class="action-pad">
             <div class="ctrl-btn btn-rotate" id="btn-rotate">↻</div>
@@ -377,17 +381,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
 <script>
-    // 邏輯解析度 (1920x1080)
-    const LOGICAL_WIDTH = 1920;
-    const LOGICAL_HEIGHT = 1080;
+    // 邏輯解析度 (Fixed Layout 720x1280)
+    const LOGICAL_WIDTH = 720;
+    const LOGICAL_HEIGHT = 1280;
 
     const BOARD_WIDTH = 14; 
     const BOARD_HEIGHT = 20;
     
-    // Retro Neon Palette
+    // Retro Neon Palette - Adjusted for distinction
     const COLORS = {
-        I: 0x00FFFF, J: 0x1E90FF, L: 0xFF8800, O: 0xFFFF00,
-        S: 0x00FF00, T: 0x9D00FF, Z: 0xFF0055
+        I: 0x00FFFF, // Cyan
+        J: 0x1E90FF, // Dodger Blue
+        L: 0xFF8800, // Orange
+        O: 0xFFFF00, // Yellow
+        S: 0x00FF00, // Green
+        T: 0x9D00FF, // Purple
+        Z: 0xFF0055  // Red/Pink
     };
 
     const TETROMINOS = {
@@ -418,16 +427,13 @@
 
     const previewManagers = {}; 
 
-    // --- 修正後的縮放與置中 ---
+    // --- 畫面縮放 ---
     function resizeGame() {
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
-        
-        // 計算縮放
         const scale = Math.min(windowWidth / LOGICAL_WIDTH, windowHeight / LOGICAL_HEIGHT);
         
         const stage = document.getElementById('game-stage');
-        // 使用 translate 保持置中，並應用 scale
         stage.style.transform = `translate(-50%, -50%) scale(${scale})`;
 
         if(renderer) {
@@ -487,20 +493,21 @@
         animate(0);
     }
 
-    // 關鍵修正：使用 LOGICAL 寬高計算投影位置
+    // 更新板面佈局 - 這就是修復 UI 對齊的關鍵函數
     function updateBoardLayout() {
         const boardDiv = document.getElementById('board-area');
         if (!boardDiv || !camera) return;
 
         camera.updateMatrixWorld();
 
-        // 緊縮邊界 -7.0 到 7.0
-        const topLeft = new THREE.Vector3(-7.0, 20.6, 0);
-        const bottomRight = new THREE.Vector3(7.0, -0.6, 0);
+        // 盤面邊界座標 (-7.0 ~ 7.0)
+        const topLeft = new THREE.Vector3(-7.1, 20.6, 0);
+        const bottomRight = new THREE.Vector3(7.1, -0.6, 0);
 
         topLeft.project(camera);
         bottomRight.project(camera);
 
+        // 轉換為相對於 720x1280 的座標
         const x1 = (topLeft.x * 0.5 + 0.5) * LOGICAL_WIDTH;
         const y1 = (-(topLeft.y * 0.5) + 0.5) * LOGICAL_HEIGHT;
         const x2 = (bottomRight.x * 0.5 + 0.5) * LOGICAL_WIDTH;
@@ -515,6 +522,7 @@
         boardDiv.style.height = height + 'px';
         boardDiv.style.left = left + 'px';
         boardDiv.style.top = top + 'px';
+        // 移除 transform，因為已經絕對定位了
         boardDiv.style.transform = 'none'; 
     }
 
@@ -522,8 +530,8 @@
         const container = document.getElementById(containerId);
         if(!container) return;
         
-        const width = 120; // Hold & Next 0
-        const height = container.id.includes('next-canvas-0') || container.id.includes('hold') ? 120 : 90;
+        const width = 80;
+        const height = container.id.includes('next-canvas-0') || container.id.includes('hold') ? 80 : 60;
 
         const pScene = new THREE.Scene();
         const pCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 50);
@@ -860,7 +868,7 @@
         const scoreBox = document.getElementById('score-box-div');
         if(scoreBox) {
             scoreBox.classList.remove('score-anim');
-            void scoreBox.offsetWidth; // Reflow
+            void scoreBox.offsetWidth; // Reflow trigger
             scoreBox.classList.add('score-anim');
         }
     }
@@ -904,6 +912,7 @@
     function animate(time) {
         requestAnimationFrame(animate);
         
+        // 核心更新：每幀計算一次面板對齊
         updateBoardLayout();
 
         const dt = (time - lastTime)/1000;
@@ -913,6 +922,7 @@
         if(!isGameOver && !isPaused && activePiece && !isClearingLines) {
             const played = time - gameStartTime - accumulatedPauseTime;
             const mins = Math.floor(played / 60000);
+            // 修改：最大速度 (最小間隔) 限制在 200ms
             const currentSpeed = Math.max(200, 400 - mins*100);
             if(gameSpeed !== currentSpeed) gameSpeed = currentSpeed;
             dropCounter += dtMs;
@@ -1040,6 +1050,7 @@
     }
 
     function onWindowResize() {
+        // 固定比例縮放邏輯，交由 resizeGame 處理
         resizeGame();
     }
 
