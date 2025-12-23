@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D 俄羅斯方塊 (Final Fix)</title>
+    <title>3D 俄羅斯方塊 (Final Fixed)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -13,22 +13,22 @@
             background-color: #000;
             font-family: 'Press Start 2P', cursive, 'Segoe UI', sans-serif;
             color: #e0e0e0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             width: 100vw;
-            touch-action: none; 
+            height: 100vh;
         }
 
-        /* 遊戲舞台：固定 720x1280 (直向) */
+        /* 遊戲舞台：固定 720x1280 */
         #game-stage {
-            position: relative;
+            position: absolute; /* 修改：使用絕對定位 */
+            top: 50%;
+            left: 50%;
             width: 720px;
             height: 1280px;
-            background-color: #000; /* 純黑背景 */
-            overflow: visible; /* 允許 UI 溢出 */
+            background-color: #000;
+            overflow: visible; 
             box-shadow: 0 0 20px rgba(0, 255, 255, 0.1); 
+            /* 預設置中，JS 會覆寫這個 transform */
+            transform: translate(-50%, -50%);
             transform-origin: center center;
         }
 
@@ -45,8 +45,8 @@
         /* UI 層 */
         #ui-layer {
             position: absolute;
-            top: 30px;
-            left: 30px;
+            top: 40px;
+            left: 40px;
             pointer-events: none;
             z-index: 20;
             display: flex;
@@ -55,7 +55,7 @@
             gap: 15px;
         }
 
-        /* 介面定位錨點 - 這會由 JS 動態調整大小 */
+        /* 介面定位錨點 */
         #board-area {
             position: absolute;
             top: 50%;
@@ -64,7 +64,6 @@
             height: 100px;
             pointer-events: none;
             z-index: 10;
-            /* border: 2px solid red; // 開啟可除錯位置 */
         }
 
         .side-panel {
@@ -75,7 +74,6 @@
             pointer-events: none;
         }
 
-        /* 左側 Hold 面板：定位於 Board Area 左邊 */
         #left-panel {
             top: 25%; 
             right: 100%; 
@@ -84,7 +82,6 @@
             transform: translateY(-50%);
         }
 
-        /* 右側 Next 面板：定位於 Board Area 右邊 (下移至 40%) */
         #right-panel {
             top: 40%;
             left: 100%; 
@@ -148,16 +145,16 @@
         }
 
         .score-label {
-            font-size: 16px;
+            font-size: 20px;
             color: #888;
             font-weight: bold;
             letter-spacing: 2px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
             display: block;
         }
 
         .score-box {
-            font-size: 48px; 
+            font-size: 56px; 
             font-weight: 900;
             font-family: 'Courier New', Courier, monospace;
             text-shadow: 4px 4px 0px rgba(0,0,0,0.8);
@@ -242,7 +239,6 @@
             box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
         }
 
-        /* 虛擬按鍵 */
         #mobile-controls {
             display: flex;
             position: absolute;
@@ -260,17 +256,17 @@
 
         .d-pad { 
             display: grid;
-            grid-template-columns: 50px 50px 50px;
-            grid-template-rows: 50px 50px;
-            gap: 5px;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px;
+            gap: 10px;
             width: auto;
             height: auto;
             margin-bottom: 20px;
         }
 
         .ctrl-btn {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             background: rgba(0, 255, 255, 0.1);
             border-radius: 10px;
             border: 1px solid rgba(0, 255, 255, 0.5);
@@ -311,7 +307,7 @@
         
         .action-pad { 
             position: relative; 
-            margin-bottom: 40px; 
+            margin-bottom: 60px; 
         }
 
         .btn-rotate { 
@@ -368,7 +364,7 @@
     <div id="mobile-controls">
         <div class="d-pad">
             <div class="ctrl-btn btn-left" id="btn-left">←</div>
-            <div class="ctrl-btn" id="btn-hold" style="font-size: 14px;">HOLD</div>
+            <div class="ctrl-btn" id="btn-hold">HOLD</div>
             <div class="ctrl-btn btn-right" id="btn-right">→</div>
             <div class="ctrl-btn btn-down" id="btn-down">↓</div>
         </div>
@@ -388,7 +384,7 @@
     const BOARD_WIDTH = 14; 
     const BOARD_HEIGHT = 20;
     
-    // Retro Neon Palette - Adjusted for distinction
+    // Vibrant Neon Palette - Distinct Colors
     const COLORS = {
         I: 0x00FFFF, // Cyan
         J: 0x1E90FF, // Dodger Blue
@@ -431,6 +427,8 @@
     function resizeGame() {
         const windowWidth = window.innerWidth;
         const windowHeight = window.innerHeight;
+        
+        // 核心修正：使用 translate + scale 進行絕對置中縮放
         const scale = Math.min(windowWidth / LOGICAL_WIDTH, windowHeight / LOGICAL_HEIGHT);
         
         const stage = document.getElementById('game-stage');
@@ -447,7 +445,7 @@
 
         scene = new THREE.Scene();
         scene.background = new THREE.Color(0x000000); 
-        // 移除霧氣
+        // 移除霧氣以保持背景純黑
         
         camera = new THREE.PerspectiveCamera(60, LOGICAL_WIDTH / LOGICAL_HEIGHT, 0.1, 1000);
         camera.position.set(0, 10, 24);
@@ -493,21 +491,19 @@
         animate(0);
     }
 
-    // 更新板面佈局 - 這就是修復 UI 對齊的關鍵函數
     function updateBoardLayout() {
         const boardDiv = document.getElementById('board-area');
         if (!boardDiv || !camera) return;
 
         camera.updateMatrixWorld();
 
-        // 盤面邊界座標 (-7.0 ~ 7.0)
-        const topLeft = new THREE.Vector3(-7.1, 20.6, 0);
-        const bottomRight = new THREE.Vector3(7.1, -0.6, 0);
+        // 移除邊界緩衝，使用 -7.0 到 7.0 緊貼盤面
+        const topLeft = new THREE.Vector3(-7.0, 20.6, 0);
+        const bottomRight = new THREE.Vector3(7.0, -0.6, 0);
 
         topLeft.project(camera);
         bottomRight.project(camera);
 
-        // 轉換為相對於 720x1280 的座標
         const x1 = (topLeft.x * 0.5 + 0.5) * LOGICAL_WIDTH;
         const y1 = (-(topLeft.y * 0.5) + 0.5) * LOGICAL_HEIGHT;
         const x2 = (bottomRight.x * 0.5 + 0.5) * LOGICAL_WIDTH;
@@ -522,7 +518,6 @@
         boardDiv.style.height = height + 'px';
         boardDiv.style.left = left + 'px';
         boardDiv.style.top = top + 'px';
-        // 移除 transform，因為已經絕對定位了
         boardDiv.style.transform = 'none'; 
     }
 
@@ -546,8 +541,8 @@
         const group = new THREE.Group();
         pScene.add(group);
 
-        pScene.add(new THREE.AmbientLight(0xffffff, 1.0)); 
-        const light = new THREE.DirectionalLight(0xffffff, 0.8); 
+        pScene.add(new THREE.AmbientLight(0x404040, 1.2)); 
+        const light = new THREE.DirectionalLight(0xffffff, 0.6); 
         light.position.set(1, 2, 3);
         pScene.add(light);
         const blueLight = new THREE.PointLight(0x00ffff, 0.5);
@@ -612,12 +607,14 @@
     }
 
     function createBoardVisuals() {
+        // Frame
         const frameGeo = new THREE.BoxGeometry(BOARD_WIDTH + 0.5, BOARD_HEIGHT + 0.5, 1.5);
         const edges = new THREE.EdgesGeometry(frameGeo);
         const line = new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x00ffff, opacity: 0.8, transparent: true }));
         line.position.set(0, BOARD_HEIGHT/2 - 0.5, 0); 
         scene.add(line);
 
+        // Custom Grid
         const gridMat = new THREE.LineBasicMaterial({ 
             color: 0x00ffff, 
             transparent: true, 
@@ -625,16 +622,27 @@
         });
 
         const gridGroup = new THREE.Group();
+
+        // Vertical
         for (let x = 0; x <= BOARD_WIDTH; x++) {
             const xPos = x - BOARD_WIDTH / 2;
-            const points = [new THREE.Vector3(xPos, -0.5, 0), new THREE.Vector3(xPos, BOARD_HEIGHT - 0.5, 0)];
-            gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), gridMat));
+            const points = [];
+            points.push(new THREE.Vector3(xPos, -0.5, 0));
+            points.push(new THREE.Vector3(xPos, BOARD_HEIGHT - 0.5, 0));
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            gridGroup.add(new THREE.Line(geo, gridMat));
         }
+
+        // Horizontal
         for (let y = 0; y <= BOARD_HEIGHT; y++) {
             const yPos = y - 0.5;
-            const points = [new THREE.Vector3(-BOARD_WIDTH / 2, yPos, 0), new THREE.Vector3(BOARD_WIDTH / 2, yPos, 0)];
-            gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), gridMat));
+            const points = [];
+            points.push(new THREE.Vector3(-BOARD_WIDTH / 2, yPos, 0));
+            points.push(new THREE.Vector3(BOARD_WIDTH / 2, yPos, 0));
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            gridGroup.add(new THREE.Line(geo, gridMat));
         }
+
         gridGroup.position.z = -0.5;
         scene.add(gridGroup);
     }
