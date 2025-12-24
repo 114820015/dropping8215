@@ -19,8 +19,10 @@
             height: 100vh;
             width: 100vw;
             touch-action: none; 
+            transition: background-color 0.1s; /* 用於閃光特效 */
         }
 
+        /* 遊戲舞台 */
         #game-stage {
             position: absolute;
             width: 720px;
@@ -44,6 +46,7 @@
             z-index: 1;
         }
 
+        /* UI 層 */
         #ui-layer {
             position: absolute;
             top: 40px;
@@ -56,42 +59,42 @@
             gap: 15px;
         }
 
+        /* 介面定位錨點 - 寬度縮小以適應 12 格 */
         #board-area {
             position: absolute;
             top: 48%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 640px;
+            /* 修改：從 640px 縮小到 550px，配合 12 格寬度 */
+            width: 550px;
             height: 800px;
             pointer-events: none;
             z-index: 10;
         }
 
+        /* 側邊面板 (只包含框框) */
         .side-panel {
             position: absolute;
             display: flex;
             flex-direction: column;
-            gap: 60px; /* 增加間距，讓按鍵跟框框分開一點 */
+            gap: 20px;
             pointer-events: none;
-            top: 50%;
-            transform: translateY(-50%);
         }
 
         #left-panel {
+            top: 25%; 
             right: 100%; 
             margin-right: 4px; 
-            align-items: flex-end; 
+            align-items: flex-end;
+            transform: translateY(-50%);
         }
 
         #right-panel {
+            top: 40%;
             left: 100%; 
             margin-left: 4px; 
-            align-items: flex-start; 
-        }
-
-        /* 確保面板內的元素可以被點擊 */
-        .side-panel > * {
-            pointer-events: auto;
+            align-items: flex-start;
+            transform: translateY(-50%);
         }
 
         .cyber-box {
@@ -105,6 +108,7 @@
             justify-content: flex-start;
             padding: 10px;
             backdrop-filter: blur(4px);
+            pointer-events: auto;
         }
 
         .box-label {
@@ -124,13 +128,15 @@
             border-radius: 4px;
         }
 
-        /* HOLD 顯示框 (純顯示) */
         #hold-box {
             width: 100px;
             height: 120px;
             border-color: #ffff00;
             box-shadow: 0 0 15px rgba(255, 255, 0, 0.2);
+            cursor: pointer;
+            transition: transform 0.1s;
         }
+        #hold-box:active { transform: scale(0.95); background: rgba(255,255,0,0.1); }
         #hold-box .box-label { color: #ffff00; text-shadow: 0 0 5px #ffff00; }
 
         #next-box {
@@ -233,7 +239,6 @@
             gap: 5px;
         }
 
-        /* 修改：改回 3 欄式 Grid 以實現 T 字型 */
         .d-pad-grid {
             display: grid;
             grid-template-columns: 60px 60px 60px; /* 左 中 右 */
@@ -265,7 +270,6 @@
             fill: #0ff; filter: drop-shadow(0 0 2px #0ff);
         }
 
-        /* T字型定位 */
         .btn-left { grid-column: 1; grid-row: 1; }
         
         /* Hold 鍵在第一排中間 */
@@ -281,7 +285,6 @@
 
         .btn-right { grid-column: 3; grid-row: 1; }
         
-        /* 下鍵在第二排中間 */
         .btn-down { grid-column: 2; grid-row: 2; }
 
         .btn-rotate {
@@ -371,7 +374,8 @@
     const LOGICAL_WIDTH = 720;
     const LOGICAL_HEIGHT = 1280;
 
-    const BOARD_WIDTH = 14; 
+    // 修改：寬度改為 12
+    const BOARD_WIDTH = 12; 
     const BOARD_HEIGHT = 20;
     
     const COLORS = {
@@ -573,14 +577,20 @@
 
         for (let x = 0; x <= BOARD_WIDTH; x++) {
             const xPos = x - BOARD_WIDTH / 2;
-            const points = [new THREE.Vector3(xPos, -0.5, 0), new THREE.Vector3(xPos, BOARD_HEIGHT - 0.5, 0)];
-            gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), gridMat));
+            const points = [];
+            points.push(new THREE.Vector3(xPos, -0.5, 0));
+            points.push(new THREE.Vector3(xPos, BOARD_HEIGHT - 0.5, 0));
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            gridGroup.add(new THREE.Line(geo, gridMat));
         }
 
         for (let y = 0; y <= BOARD_HEIGHT; y++) {
             const yPos = y - 0.5;
-            const points = [new THREE.Vector3(-BOARD_WIDTH / 2, yPos, 0), new THREE.Vector3(BOARD_WIDTH / 2, yPos, 0)];
-            gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), gridMat));
+            const points = [];
+            points.push(new THREE.Vector3(-BOARD_WIDTH / 2, yPos, 0));
+            points.push(new THREE.Vector3(BOARD_WIDTH / 2, yPos, 0));
+            const geo = new THREE.BufferGeometry().setFromPoints(points);
+            gridGroup.add(new THREE.Line(geo, gridMat));
         }
 
         gridGroup.position.z = -0.5;
@@ -781,10 +791,20 @@
         });
         setTimeout(() => {
             try {
+                const isTetris = rows.length === 4;
                 rows.forEach(y => {
                     for(let x=0; x<BOARD_WIDTH; x++) if(board[y][x]) spawnParticles(x, y, board[y][x]);
                 });
-                triggerShake(0.3 + rows.length * 0.2);
+                
+                if(isTetris) {
+                    triggerShake(1.5);
+                    // 簡單閃光
+                    document.body.style.backgroundColor = '#222';
+                    setTimeout(() => document.body.style.backgroundColor = '#000', 100);
+                } else {
+                    triggerShake(0.3 + rows.length * 0.2);
+                }
+
                 rows.reverse().forEach(y => {
                     board.splice(y, 1);
                     board.push(Array(BOARD_WIDTH).fill(null));
@@ -808,7 +828,9 @@
     }
 
     function updateScore(lines) {
-        score += [0, 100, 300, 500, 800][lines] * level;
+        // 修改：4行 500分
+        const lineScores = [0, 100, 200, 300, 500];
+        score += lineScores[lines] * level;
         level = Math.floor(score/1000) + 1;
         updateUI();
         
@@ -922,15 +944,18 @@
     function onKeyDown(e) {
         if(e.code === 'Space') {
             e.preventDefault();
-            // 觸發按鍵發光，但不觸發框框縮放 (因為現在是分開的按鍵)
-            toggleBtn('btn-hold', true);
+            const hb = document.getElementById('hold-box');
+            const hbtn = document.getElementById('btn-hold');
+            if(hb) hb.style.transform = "scale(0.95)";
+            if(hbtn) hbtn.classList.add('active');
         }
         
         if(e.code === 'ArrowLeft' || e.code === 'KeyA') toggleBtn('btn-left', true);
         if(e.code === 'ArrowRight' || e.code === 'KeyD') toggleBtn('btn-right', true);
         if(e.code === 'ArrowDown' || e.code === 'KeyS') toggleBtn('btn-down', true);
         if(e.code === 'ArrowUp' || e.code === 'KeyW') toggleBtn('btn-rotate', true);
-        
+        if(e.code === 'Space') toggleBtn('btn-hold', true);
+
         if(isGameOver && e.code !== 'Space') return;
         
         switch(e.code) {
@@ -949,6 +974,13 @@
         if(e.code === 'ArrowDown' || e.code === 'KeyS') toggleBtn('btn-down', false);
         if(e.code === 'ArrowUp' || e.code === 'KeyW') toggleBtn('btn-rotate', false);
         if(e.code === 'Space') toggleBtn('btn-hold', false);
+        
+        if(e.code === 'Space') {
+             const hb = document.getElementById('hold-box');
+             const hbtn = document.getElementById('btn-hold');
+             if(hb) hb.style.transform = "scale(1)";
+             if(hbtn) hbtn.classList.remove('active');
+        }
     }
 
     function togglePause() {
@@ -995,6 +1027,23 @@
         
         // 綁定獨立的 HOLD 按鍵
         bind('btn-hold', () => triggerHold());
+        
+        // 保留 Hold 框框點擊功能
+        const hb = document.getElementById('hold-box');
+        if(hb) {
+             hb.addEventListener('pointerdown', (e) => {
+                e.preventDefault();
+                triggerHold();
+                // 視覺回饋
+                hb.style.transform = "scale(0.95)";
+                // 同步點亮下方按鍵
+                toggleBtn('btn-hold', true);
+            });
+            hb.addEventListener('pointerup', () => {
+                hb.style.transform = "scale(1)";
+                toggleBtn('btn-hold', false);
+            });
+        }
     }
 
     function onWindowResize() {
