@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D 俄羅斯方塊 (Big & Explosive)</title>
+    <title>3D 俄羅斯方塊 (Big Blocks)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -67,7 +67,7 @@
             z-index: 10;
         }
 
-        /* 側邊面板：設定高度並分散對齊 */
+        /* 側邊面板 */
         .side-panel {
             position: absolute;
             display: flex;
@@ -147,13 +147,12 @@
             border-color: #00ffff;
         }
         
-        /* 修改重點：右邊第一格加粗 (原本 2px -> 5px) 且更亮 */
         #next-canvas-0 { 
             width: 110px; 
             height: 110px; 
             margin-bottom: 20px; 
-            border: 5px solid #00ffff; /* 加粗 */
-            box-shadow: 0 0 15px rgba(0,255,255,0.6); /* 增加發光 */
+            border: 5px solid #00ffff; 
+            box-shadow: 0 0 15px rgba(0,255,255,0.6); 
         }
         
         .small-next { width: 80px; height: 80px; margin-bottom: 10px; opacity: 0.8; }
@@ -284,14 +283,13 @@
 
         .btn-left { grid-column: 1; grid-row: 1; }
         
-        /* 修改重點：Hold 鍵樣式 (字體縮小以容納 SPACE) */
         .btn-hold { 
             grid-column: 2; 
             grid-row: 1; 
             border-color: #ffff00; 
             color: #ffff00; 
             box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
-            font-size: 13px; /* 縮小字體以顯示 SPACE */
+            font-size: 13px; 
             font-family: 'Press Start 2P', cursive;
         }
         .btn-hold:active, .btn-hold.active { background: rgba(255, 255, 0, 0.3); box-shadow: 0 0 30px #ff0; }
@@ -353,7 +351,6 @@
                 <div class="ctrl-btn btn-left" id="btn-left">
                     <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
                 </div>
-                <!-- 修改：H 改為 SPACE -->
                 <div class="ctrl-btn btn-hold" id="btn-hold">SPACE</div>
                 <div class="ctrl-btn btn-right" id="btn-right">
                     <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
@@ -501,12 +498,20 @@
         const container = document.getElementById(containerId);
         if(!container) return;
         
-        const width = 80;
-        const height = container.id.includes('next-canvas-0') || container.id.includes('hold') ? 80 : 60;
+        const width = container.clientWidth;
+        const height = container.clientHeight;
 
         const pScene = new THREE.Scene();
         const pCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 50);
-        const dist = container.id.includes('next-canvas-0') ? 5.5 : 4.5;
+        
+        // 修改：拉近相機距離，放大方塊
+        let dist = 4.0;
+        if (container.id.includes('next-canvas-0') || container.id.includes('hold')) {
+            dist = 3.8; 
+        } else {
+            dist = 4.5; 
+        }
+
         pCamera.position.set(0, 0, dist); 
         pCamera.lookAt(0, 0, 0);
 
@@ -714,7 +719,7 @@
             const wy = activePiece.y + dy;
             mesh.position.set(wx, wy, 0);
             const edges = new THREE.EdgesGeometry(geometry);
-            // Black lines for falling pieces
+            // Black lines
             mesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, opacity: 1 })));
             activeGroup.add(mesh);
         });
