@@ -21,7 +21,6 @@
             touch-action: none; 
         }
 
-        /* 遊戲舞台 */
         #game-stage {
             position: absolute;
             width: 720px;
@@ -45,7 +44,6 @@
             z-index: 1;
         }
 
-        /* UI 層 */
         #ui-layer {
             position: absolute;
             top: 40px;
@@ -58,7 +56,6 @@
             gap: 15px;
         }
 
-        /* 介面定位錨點 - 這裡只負責定位 Hold/Next 框框 */
         #board-area {
             position: absolute;
             top: 48%;
@@ -70,29 +67,31 @@
             z-index: 10;
         }
 
-        /* 側邊面板 (只包含框框) */
         .side-panel {
             position: absolute;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 60px; /* 增加間距，讓按鍵跟框框分開一點 */
             pointer-events: none;
+            top: 50%;
+            transform: translateY(-50%);
         }
 
         #left-panel {
-            top: 25%; 
             right: 100%; 
             margin-right: 4px; 
-            align-items: flex-end;
-            transform: translateY(-50%);
+            align-items: flex-end; 
         }
 
         #right-panel {
-            top: 40%;
             left: 100%; 
             margin-left: 4px; 
-            align-items: flex-start;
-            transform: translateY(-50%);
+            align-items: flex-start; 
+        }
+
+        /* 確保面板內的元素可以被點擊 */
+        .side-panel > * {
+            pointer-events: auto;
         }
 
         .cyber-box {
@@ -106,7 +105,6 @@
             justify-content: flex-start;
             padding: 10px;
             backdrop-filter: blur(4px);
-            pointer-events: auto; /* 允許點擊 Hold 框框 */
         }
 
         .box-label {
@@ -126,15 +124,13 @@
             border-radius: 4px;
         }
 
+        /* HOLD 顯示框 (純顯示) */
         #hold-box {
             width: 100px;
             height: 120px;
             border-color: #ffff00;
             box-shadow: 0 0 15px rgba(255, 255, 0, 0.2);
-            cursor: pointer;
-            transition: transform 0.1s;
         }
-        #hold-box:active { transform: scale(0.95); background: rgba(255,255,0,0.1); }
         #hold-box .box-label { color: #ffff00; text-shadow: 0 0 5px #ffff00; }
 
         #next-box {
@@ -228,26 +224,20 @@
         }
         button:hover { background: #0ff; color: #000; box-shadow: 0 0 30px rgba(0, 255, 255, 0.8); }
 
-        /* --- 虛擬按鍵區 (獨立於側邊面板) --- */
-        #mobile-controls {
-            display: flex;
-            position: absolute;
-            bottom: 50px; /* 固定在螢幕底部 */
-            left: 0;
-            width: 100%;
-            height: 200px; 
-            z-index: 50;
+        /* --- 虛擬按鍵樣式 --- */
+        .controls-container {
             pointer-events: auto;
-            justify-content: space-between;
-            padding: 0 50px; 
-            box-sizing: border-box;
-            align-items: flex-end; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
         }
 
+        /* 修改：改回 3 欄式 Grid 以實現 T 字型 */
         .d-pad-grid {
             display: grid;
-            grid-template-columns: 60px 60px 60px;
-            grid-template-rows: 60px 60px;
+            grid-template-columns: 60px 60px 60px; /* 左 中 右 */
+            grid-template-rows: 60px 60px;        /* 上 下 */
             gap: 10px;
         }
 
@@ -255,7 +245,7 @@
             width: 60px;
             height: 60px;
             background: rgba(0, 255, 255, 0.1);
-            border-radius: 12px;
+            border-radius: 10px;
             border: 2px solid #0ff;
             color: #0ff;
             font-size: 24px;
@@ -269,10 +259,16 @@
             transition: all 0.1s;
         }
         .ctrl-btn:active, .ctrl-btn.active { background: rgba(0, 255, 255, 0.4); transform: scale(0.95); box-shadow: 0 0 20px #0ff; }
+        
+        .ctrl-btn svg {
+            width: 32px; height: 32px;
+            fill: #0ff; filter: drop-shadow(0 0 2px #0ff);
+        }
 
+        /* T字型定位 */
         .btn-left { grid-column: 1; grid-row: 1; }
         
-        /* Hold 鍵在中間 (T字型的上方中間) */
+        /* Hold 鍵在第一排中間 */
         .btn-hold { 
             grid-column: 2; 
             grid-row: 1; 
@@ -285,7 +281,7 @@
 
         .btn-right { grid-column: 3; grid-row: 1; }
         
-        /* 下鍵在中間下方 */
+        /* 下鍵在第二排中間 */
         .btn-down { grid-column: 2; grid-row: 2; }
 
         .btn-rotate {
@@ -296,6 +292,10 @@
             border-radius: 20px;
             font-size: 40px;
             box-shadow: 0 0 10px #f0f;
+        }
+        .btn-rotate svg {
+            width: 50px; height: 50px;
+            fill: #f0f; filter: drop-shadow(0 0 2px #f0f);
         }
         .btn-rotate:active, .btn-rotate.active { background: rgba(255, 0, 255, 0.4); box-shadow: 0 0 30px #f0f; transform: scale(0.95); }
 
@@ -315,15 +315,32 @@
     <!-- 介面定位錨點 -->
     <div id="board-area"></div>
 
-    <!-- 左側面板：只放 Hold 框框 -->
+    <!-- 左側面板：Hold 框框 -->
     <div id="left-panel" class="side-panel">
         <div id="hold-box" class="cyber-box">
             <div class="box-label">HOLD</div>
             <div id="hold-canvas-container" class="preview-canvas"></div>
         </div>
+        
+        <!-- 左側控制：分離的按鍵區 (T字型) -->
+        <div class="controls-container">
+            <div class="d-pad-grid">
+                <div class="ctrl-btn btn-left" id="btn-left">
+                    <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                </div>
+                <!-- Hold 按鍵 -->
+                <div class="ctrl-btn btn-hold" id="btn-hold">H</div>
+                <div class="ctrl-btn btn-right" id="btn-right">
+                    <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                </div>
+                <div class="ctrl-btn btn-down" id="btn-down">
+                    <svg viewBox="0 0 24 24"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- 右側面板：只放 Next 框框 -->
+    <!-- 右側面板：Next 框框 -->
     <div id="right-panel" class="side-panel">
         <div id="next-box" class="cyber-box">
             <div class="box-label">NEXT</div>
@@ -332,21 +349,12 @@
             <div id="next-canvas-2" class="preview-canvas small-next"></div>
             <div id="next-canvas-3" class="preview-canvas small-next"></div>
         </div>
-    </div>
 
-    <!-- 下方獨立控制區 -->
-    <div id="mobile-controls">
-        <!-- 左下：T字型 D-Pad (左, Hold, 右, 下) -->
-        <div class="d-pad-grid">
-            <div class="ctrl-btn btn-left" id="btn-left">←</div>
-            <div class="ctrl-btn btn-hold" id="btn-hold">H</div>
-            <div class="ctrl-btn btn-right" id="btn-right">→</div>
-            <div class="ctrl-btn btn-down" id="btn-down">↓</div>
-        </div>
-
-        <!-- 右下：旋轉鍵 -->
-        <div class="action-pad">
-            <div class="ctrl-btn btn-rotate" id="btn-rotate">↻</div>
+        <!-- 右側控制：分離的旋轉鍵 -->
+        <div class="controls-container">
+            <div class="ctrl-btn btn-rotate" id="btn-rotate">
+                <svg viewBox="0 0 24 24"><path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6 0 2.97-2.17 5.43-5 5.91v2.02c3.95-.49 7-3.85 7-7.93 0-4.42-3.58-8-8-8zm-6 8c0-1.65.67-3.15 1.76-4.24l1.42 1.42C8.45 10.9 8 11.9 8 13c0 2.21 1.79 4 4 4v2c-3.31 0-6-2.69-6-6z"/></svg>
+            </div>
         </div>
     </div>
 
@@ -562,16 +570,19 @@
         });
 
         const gridGroup = new THREE.Group();
+
         for (let x = 0; x <= BOARD_WIDTH; x++) {
             const xPos = x - BOARD_WIDTH / 2;
             const points = [new THREE.Vector3(xPos, -0.5, 0), new THREE.Vector3(xPos, BOARD_HEIGHT - 0.5, 0)];
             gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), gridMat));
         }
+
         for (let y = 0; y <= BOARD_HEIGHT; y++) {
             const yPos = y - 0.5;
             const points = [new THREE.Vector3(-BOARD_WIDTH / 2, yPos, 0), new THREE.Vector3(BOARD_WIDTH / 2, yPos, 0)];
             gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), gridMat));
         }
+
         gridGroup.position.z = -0.5;
         scene.add(gridGroup);
     }
@@ -676,6 +687,7 @@
             const wy = activePiece.y + dy;
             mesh.position.set(wx, wy, 0);
             const edges = new THREE.EdgesGeometry(geometry);
+            // Black lines for falling pieces
             mesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, opacity: 1 })));
             activeGroup.add(mesh);
         });
@@ -910,17 +922,15 @@
     function onKeyDown(e) {
         if(e.code === 'Space') {
             e.preventDefault();
-            const hb = document.getElementById('hold-box');
-            const hbtn = document.getElementById('btn-hold');
-            if(hb) hb.style.transform = "scale(0.95)";
-            if(hbtn) hbtn.classList.add('active');
+            // 觸發按鍵發光，但不觸發框框縮放 (因為現在是分開的按鍵)
+            toggleBtn('btn-hold', true);
         }
         
         if(e.code === 'ArrowLeft' || e.code === 'KeyA') toggleBtn('btn-left', true);
         if(e.code === 'ArrowRight' || e.code === 'KeyD') toggleBtn('btn-right', true);
         if(e.code === 'ArrowDown' || e.code === 'KeyS') toggleBtn('btn-down', true);
         if(e.code === 'ArrowUp' || e.code === 'KeyW') toggleBtn('btn-rotate', true);
-
+        
         if(isGameOver && e.code !== 'Space') return;
         
         switch(e.code) {
@@ -938,13 +948,7 @@
         if(e.code === 'ArrowRight' || e.code === 'KeyD') toggleBtn('btn-right', false);
         if(e.code === 'ArrowDown' || e.code === 'KeyS') toggleBtn('btn-down', false);
         if(e.code === 'ArrowUp' || e.code === 'KeyW') toggleBtn('btn-rotate', false);
-        
-        if(e.code === 'Space') {
-             const hb = document.getElementById('hold-box');
-             const hbtn = document.getElementById('btn-hold');
-             if(hb) hb.style.transform = "scale(1)";
-             if(hbtn) hbtn.classList.remove('active');
-        }
+        if(e.code === 'Space') toggleBtn('btn-hold', false);
     }
 
     function togglePause() {
@@ -988,26 +992,9 @@
         bind('btn-right', () => movePiece(1, 0));
         bind('btn-down', () => { movePiece(0, -1); dropCounter=0; });
         bind('btn-rotate', () => rotatePiece());
-        bind('btn-hold', () => triggerHold());
         
-        // Hold box click
-        const hb = document.getElementById('hold-box');
-        if(hb) {
-            hb.addEventListener('pointerdown', (e) => {
-                e.preventDefault();
-                triggerHold();
-                hb.style.transform = "scale(0.95)";
-                hb.style.background = "rgba(255, 255, 0, 0.1)";
-            });
-            hb.addEventListener('pointerup', () => {
-                hb.style.transform = "scale(1)";
-                hb.style.background = "rgba(0, 10, 20, 0.85)";
-            });
-             hb.addEventListener('pointerleave', () => {
-                hb.style.transform = "scale(1)";
-                hb.style.background = "rgba(0, 10, 20, 0.85)";
-            });
-        }
+        // 綁定獨立的 HOLD 按鍵
+        bind('btn-hold', () => triggerHold());
     }
 
     function onWindowResize() {
