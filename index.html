@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D 俄羅斯方塊 (Big & Explosive)</title>
+    <title>3D 俄羅斯方塊 (Final Polish)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -67,93 +67,93 @@
             z-index: 10;
         }
 
-        /* 側邊面板：設定高度並分散對齊 */
         .side-panel {
             position: absolute;
             display: flex;
             flex-direction: column;
-            /* 修改：設定高度並使用 space-between 讓框框在頂、按鍵在底 */
-            height: 900px; 
-            justify-content: space-between;
-            pointer-events: none; 
-            top: 50%;
-            transform: translateY(-50%);
+            gap: 20px;
+            pointer-events: none;
+            align-items: center !important; 
         }
 
         #left-panel {
+            top: 30%; 
             right: 100%; 
-            margin-right: 20px; /* 稍微拉開一點距離 */
-            align-items: flex-end; 
+            margin-right: 10px; 
+            transform: translateY(-50%);
         }
 
         #right-panel {
+            top: 30%;
             left: 100%; 
-            margin-left: 20px; /* 稍微拉開一點距離 */
-            align-items: flex-start; 
-        }
-
-        /* 確保面板內的元素可以被點擊 */
-        .side-panel > * {
-            pointer-events: auto;
+            margin-left: 10px; 
+            transform: translateY(-50%);
         }
 
         .cyber-box {
             background: rgba(0, 10, 20, 0.85);
             border: 4px solid #0ff;
             border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-start;
-            padding: 15px;
+            padding: 10px;
             backdrop-filter: blur(4px);
             pointer-events: auto;
         }
 
         .box-label {
-            font-size: 18px; /* 字體加大 */
+            font-size: 14px;
             color: #f0f;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             text-transform: uppercase;
             letter-spacing: 2px;
             text-shadow: 0 0 5px #f0f;
             font-weight: bold;
         }
 
-        /* 預覽畫布加大 */
         .preview-canvas {
-            width: 110px;
-            height: 110px;
+            width: 80px;
+            height: 80px;
             background: rgba(0, 0, 0, 0.5);
             border-radius: 4px;
         }
 
-        /* HOLD 框加大 */
         #hold-box {
-            width: 140px;
-            height: 160px;
+            width: 110px;
+            height: 130px;
             border-color: #ffff00;
-            box-shadow: 0 0 20px rgba(255, 255, 0, 0.3);
+            box-shadow: 0 0 15px rgba(255, 255, 0, 0.2);
             cursor: pointer;
             transition: transform 0.1s;
         }
         #hold-box:active { transform: scale(0.95); background: rgba(255,255,0,0.1); }
         #hold-box .box-label { color: #ffff00; text-shadow: 0 0 5px #ffff00; }
-        #hold-canvas-container { width: 110px; height: 110px; } /* 修正容器大小 */
+        
+        #hold-canvas-container { width: 90px; height: 90px; }
 
-        /* NEXT 框加大 */
         #next-box {
-            width: 140px;
-            height: 480px; 
+            width: 110px;
+            height: 420px; 
             border-color: #00ffff;
         }
-        #next-canvas-0 { width: 110px; height: 110px; margin-bottom: 20px; border: 2px solid rgba(0,255,255,0.4); }
-        .small-next { width: 80px; height: 80px; margin-bottom: 10px; opacity: 0.8; }
+        
+        /* 修改：Next 第一個框框邊線加粗 (2px -> 4px)，並增加透明度讓它更亮 */
+        #next-canvas-0 { 
+            width: 100px; 
+            height: 100px; 
+            margin-bottom: 20px; 
+            border: 4px solid rgba(0, 255, 255, 0.8); 
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+        }
+        
+        .small-next { width: 60px; height: 60px; margin-bottom: 8px; opacity: 0.7; }
 
         .score-container { margin-bottom: 0; }
         .score-label {
-            font-size: 24px;
+            font-size: 20px;
             color: #ff00ff;
             font-weight: bold;
             letter-spacing: 2px;
@@ -162,7 +162,7 @@
             text-shadow: 2px 2px 0 #000;
         }
         .score-box {
-            font-size: 72px; /* 分數超大 */
+            font-size: 64px; 
             font-weight: 900;
             font-family: 'Courier New', Courier, monospace;
             text-shadow: 4px 4px 0px rgba(0,0,0,0.8);
@@ -175,8 +175,6 @@
             text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
             transition: color 0.1s;
         }
-        
-        /* 爆炸性的分數特效 */
         @keyframes scorePop {
             0% { transform: scale(1) rotate(0deg); }
             50% { transform: scale(2.0) rotate(-5deg); text-shadow: 0 0 50px #fff, 0 0 100px #ff00de; color: #fff;}
@@ -236,7 +234,6 @@
         }
         button:hover { background: #0ff; color: #000; box-shadow: 0 0 30px rgba(0, 255, 255, 0.8); }
 
-        /* --- 虛擬按鍵樣式 (加大) --- */
         .controls-container {
             pointer-events: auto;
             display: flex;
@@ -247,14 +244,14 @@
 
         .d-pad-grid {
             display: grid;
-            grid-template-columns: 75px 75px 75px; /* 加大 */
+            grid-template-columns: 75px 75px 75px; 
             grid-template-rows: 75px 75px;
-            gap: 15px; /* 加大間距 */
+            gap: 15px; 
         }
 
         .ctrl-btn {
-            width: 75px; /* 加大 */
-            height: 75px; /* 加大 */
+            width: 75px; 
+            height: 75px; 
             background: rgba(0, 255, 255, 0.1);
             border-radius: 12px;
             border: 2px solid #0ff;
@@ -278,27 +275,31 @@
 
         .btn-left { grid-column: 1; grid-row: 1; }
         
+        /* 修改：Hold 鍵樣式與文字 */
         .btn-hold { 
             grid-column: 2; 
             grid-row: 1; 
             border-color: #ffff00; 
             color: #ffff00; 
             box-shadow: 0 0 10px rgba(255, 255, 0, 0.3);
-            font-size: 18px;
+            /* 字體調小一點以容納 SPACE */
+            font-size: 12px; 
+            font-weight: bold;
+            font-family: 'Press Start 2P', cursive;
         }
         .btn-hold:active, .btn-hold.active { background: rgba(255, 255, 0, 0.3); box-shadow: 0 0 30px #ff0; }
 
         .btn-right { grid-column: 3; grid-row: 1; }
         
         .btn-down-container {
-            grid-column: 1 / span 3; /* 下鍵橫跨三格 */
+            grid-column: 1 / span 3; 
             display: flex;
             justify-content: center;
         }
         .btn-down { width: 75px; } 
 
         .btn-rotate {
-            width: 120px; /* 超大旋轉鍵 */
+            width: 120px; 
             height: 120px;
             border-color: #f0f;
             color: #f0f;
@@ -344,8 +345,8 @@
                 <div class="ctrl-btn btn-left" id="btn-left">
                     <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
                 </div>
-                <!-- Hold 按鍵 -->
-                <div class="ctrl-btn btn-hold" id="btn-hold">H</div>
+                <!-- 修改：文字改為 SPACE -->
+                <div class="ctrl-btn btn-hold" id="btn-hold">SPACE</div>
                 <div class="ctrl-btn btn-right" id="btn-right">
                     <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
                 </div>
@@ -492,8 +493,8 @@
         const container = document.getElementById(containerId);
         if(!container) return;
         
-        const width = container.clientWidth || 100;
-        const height = container.clientHeight || 100;
+        const width = 80;
+        const height = container.id.includes('next-canvas-0') || container.id.includes('hold') ? 80 : 60;
 
         const pScene = new THREE.Scene();
         const pCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 50);
@@ -1030,10 +1031,9 @@
         bind('btn-down', () => { movePiece(0, -1); dropCounter=0; });
         bind('btn-rotate', () => rotatePiece());
         
-        // 綁定獨立的 HOLD 按鍵
         bind('btn-hold', () => triggerHold());
         
-        // 保留 Hold 框框點擊功能
+        // Hold box click
         const hb = document.getElementById('hold-box');
         if(hb) {
              hb.addEventListener('pointerdown', (e) => {
