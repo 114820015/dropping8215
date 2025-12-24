@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>3D 俄羅斯方塊 (Final Layout)</title>
+    <title>3D 俄羅斯方塊 (Perfect Align)</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -19,10 +19,9 @@
             height: 100vh;
             width: 100vw;
             touch-action: none; 
-            transition: background-color 0.1s; /* 用於閃光特效 */
         }
 
-        /* 遊戲舞台 */
+        /* 遊戲舞台：固定 720x1280 */
         #game-stage {
             position: absolute;
             width: 720px;
@@ -46,56 +45,71 @@
             z-index: 1;
         }
 
-        /* UI 層 */
+        /* UI 層：分數 */
         #ui-layer {
             position: absolute;
             top: 40px;
             left: 40px;
             pointer-events: none;
             z-index: 20;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 15px;
         }
 
-        /* 介面定位錨點 - 寬度縮小以適應 12 格 */
+        /* 介面定位錨點 - 這代表中間 3D 盤面的區域 */
         #board-area {
             position: absolute;
             top: 48%;
             left: 50%;
             transform: translate(-50%, -50%);
-            /* 修改：從 640px 縮小到 550px，配合 12 格寬度 */
-            width: 550px;
+            width: 550px; /* 12格寬度 */
             height: 800px;
             pointer-events: none;
             z-index: 10;
+            /* border: 1px solid red; */
         }
 
-        /* 側邊面板 (只包含框框) */
-        .side-panel {
+        /* --- 左右欄位容器 --- */
+        /* 這兩個容器分別位於盤面的左邊和右邊，高度佔滿，用來定位框框和按鍵 */
+        .side-column {
             position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 140px; /* 欄位寬度 */
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            justify-content: space-between; /* 讓內容上下撐開 (框框在頂，按鍵在底) */
+            align-items: center; /* 水平置中 (X軸對齊) */
             pointer-events: none;
         }
 
-        #left-panel {
-            top: 25%; 
-            right: 100%; 
-            margin-right: 4px; 
-            align-items: flex-end;
-            transform: translateY(-50%);
+        #left-column {
+            right: 100%; /* 貼在 board-area 左側 */
+            margin-right: 10px;
         }
 
-        #right-panel {
-            top: 40%;
-            left: 100%; 
-            margin-left: 4px; 
-            align-items: flex-start;
-            transform: translateY(-50%);
+        #right-column {
+            left: 100%; /* 貼在 board-area 右側 */
+            margin-left: 10px;
         }
+
+        /* 內容區塊 */
+        .top-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* 調整這裡來控制框框的垂直位置，讓它與盤面頂部對齊 */
+            margin-top: 100px; 
+            pointer-events: auto;
+        }
+
+        .bottom-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            /* 調整這裡來控制按鍵的垂直位置 */
+            margin-bottom: 120px; 
+            pointer-events: auto;
+        }
+
 
         .cyber-box {
             background: rgba(0, 10, 20, 0.85);
@@ -108,7 +122,6 @@
             justify-content: flex-start;
             padding: 10px;
             backdrop-filter: blur(4px);
-            pointer-events: auto;
         }
 
         .box-label {
@@ -128,6 +141,7 @@
             border-radius: 4px;
         }
 
+        /* HOLD 框 */
         #hold-box {
             width: 100px;
             height: 120px;
@@ -139,15 +153,16 @@
         #hold-box:active { transform: scale(0.95); background: rgba(255,255,0,0.1); }
         #hold-box .box-label { color: #ffff00; text-shadow: 0 0 5px #ffff00; }
 
+        /* NEXT 框 */
         #next-box {
             width: 100px;
             height: 380px; 
             border-color: #00ffff;
         }
-        #next-canvas-0 { width: 80px; height: 80px; margin-bottom: 15px; border: 1px solid rgba(0,255,255,0.3); }
+        /* 第一個 Next 大一點 */
+        #next-canvas-0 { width: 90px; height: 90px; margin-bottom: 15px; border: 2px solid rgba(0,255,255,0.3); }
         .small-next { width: 60px; height: 60px; margin-bottom: 5px; opacity: 0.8; }
 
-        .score-container { margin-bottom: 0; }
         .score-label {
             font-size: 20px;
             color: #ff00ff;
@@ -163,24 +178,14 @@
             font-family: 'Courier New', Courier, monospace;
             text-shadow: 4px 4px 0px rgba(0,0,0,0.8);
             line-height: 1;
-            display: inline-block; 
-            transform-origin: left center;
         }
         .score-value {
             color: #0ff;
             text-shadow: 0 0 15px rgba(0, 255, 255, 0.8);
             transition: color 0.1s;
         }
-        @keyframes scorePop {
-            0% { transform: scale(1); }
-            40% { transform: scale(1.5); }
-            100% { transform: scale(1); }
-        }
-        @keyframes scoreGlow {
-            0% { color: #0ff; text-shadow: 0 0 15px #0ff; }
-            30% { color: #fff; text-shadow: 0 0 30px #fff, 0 0 50px #0ff; } 
-            100% { color: #0ff; text-shadow: 0 0 15px #0ff; }
-        }
+        @keyframes scorePop { 0% { transform: scale(1); } 40% { transform: scale(1.5); } 100% { transform: scale(1); } }
+        @keyframes scoreGlow { 0% { color: #0ff; text-shadow: 0 0 15px #0ff; } 30% { color: #fff; text-shadow: 0 0 30px #fff, 0 0 50px #0ff; } 100% { color: #0ff; text-shadow: 0 0 15px #0ff; } }
         .score-anim { animation: scorePop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         .score-anim .score-value { animation: scoreGlow 0.3s ease-out; }
 
@@ -201,44 +206,12 @@
             min-width: 350px;
         }
 
-        h1 {
-            margin: 0 0 20px 0;
-            font-size: 40px;
-            background: linear-gradient(90deg, #0ff, #f0f);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            filter: drop-shadow(0 0 5px rgba(0,255,255,0.5));
-        }
+        h1 { margin: 0 0 20px 0; font-size: 40px; background: linear-gradient(90deg, #0ff, #f0f); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; letter-spacing: 4px; filter: drop-shadow(0 0 5px rgba(0,255,255,0.5)); }
 
-        button {
-            background: transparent;
-            color: #0ff;
-            border: 4px solid #0ff;
-            padding: 20px 40px;
-            font-size: 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.2s;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
-            margin-top: 20px;
-            font-family: 'Press Start 2P', cursive;
-        }
+        button { background: transparent; color: #0ff; border: 4px solid #0ff; padding: 20px 40px; font-size: 24px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 0 10px rgba(0, 255, 255, 0.2); margin-top: 20px; font-family: 'Press Start 2P', cursive; }
         button:hover { background: #0ff; color: #000; box-shadow: 0 0 30px rgba(0, 255, 255, 0.8); }
 
         /* --- 虛擬按鍵樣式 --- */
-        .controls-container {
-            pointer-events: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-        }
-
         .d-pad-grid {
             display: grid;
             grid-template-columns: 60px 60px 60px; /* 左 中 右 */
@@ -253,7 +226,6 @@
             border-radius: 10px;
             border: 2px solid #0ff;
             color: #0ff;
-            font-size: 24px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -270,6 +242,7 @@
             fill: #0ff; filter: drop-shadow(0 0 2px #0ff);
         }
 
+        /* T字型定位 */
         .btn-left { grid-column: 1; grid-row: 1; }
         
         /* Hold 鍵在第一排中間 */
@@ -285,6 +258,7 @@
 
         .btn-right { grid-column: 3; grid-row: 1; }
         
+        /* 下鍵在第二排中間 */
         .btn-down { grid-column: 2; grid-row: 2; }
 
         .btn-rotate {
@@ -293,8 +267,12 @@
             border-color: #f0f;
             color: #f0f;
             border-radius: 20px;
-            font-size: 40px;
             box-shadow: 0 0 10px #f0f;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            touch-action: manipulation;
         }
         .btn-rotate svg {
             width: 50px; height: 50px;
@@ -315,51 +293,59 @@
         </div>
     </div>
 
-    <!-- 介面定位錨點 -->
-    <div id="board-area"></div>
+    <!-- 介面定位錨點 (中間盤面) -->
+    <div id="board-area">
 
-    <!-- 左側面板：Hold 框框 -->
-    <div id="left-panel" class="side-panel">
-        <div id="hold-box" class="cyber-box">
-            <div class="box-label">HOLD</div>
-            <div id="hold-canvas-container" class="preview-canvas"></div>
-        </div>
-        
-        <!-- 左側控制：分離的按鍵區 (T字型) -->
-        <div class="controls-container">
-            <div class="d-pad-grid">
-                <div class="ctrl-btn btn-left" id="btn-left">
-                    <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        <!-- 左側欄：Hold 框框 (上) + 移動鍵 (下) -->
+        <div id="left-column" class="side-column">
+            <!-- 上半部：資訊框 -->
+            <div class="top-section">
+                <div id="hold-box" class="cyber-box">
+                    <div class="box-label">HOLD</div>
+                    <div id="hold-canvas-container" class="preview-canvas"></div>
                 </div>
-                <!-- Hold 按鍵 -->
-                <div class="ctrl-btn btn-hold" id="btn-hold">H</div>
-                <div class="ctrl-btn btn-right" id="btn-right">
-                    <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
-                </div>
-                <div class="ctrl-btn btn-down" id="btn-down">
-                    <svg viewBox="0 0 24 24"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+            </div>
+            
+            <!-- 下半部：按鍵區 -->
+            <div class="bottom-section">
+                <div class="d-pad-grid">
+                    <div class="ctrl-btn btn-left" id="btn-left">
+                        <svg viewBox="0 0 24 24"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                    </div>
+                    <!-- Hold 按鍵 -->
+                    <div class="ctrl-btn btn-hold" id="btn-hold">H</div>
+                    <div class="ctrl-btn btn-right" id="btn-right">
+                        <svg viewBox="0 0 24 24"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                    </div>
+                    <div class="ctrl-btn btn-down" id="btn-down">
+                        <svg viewBox="0 0 24 24"><path d="M16.59 8.59L12 13.17 7.41 8.59 6 10l6 6 6-6z"/></svg>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 右側面板：Next 框框 -->
-    <div id="right-panel" class="side-panel">
-        <div id="next-box" class="cyber-box">
-            <div class="box-label">NEXT</div>
-            <div id="next-canvas-0" class="preview-canvas"></div>
-            <div id="next-canvas-1" class="preview-canvas small-next"></div>
-            <div id="next-canvas-2" class="preview-canvas small-next"></div>
-            <div id="next-canvas-3" class="preview-canvas small-next"></div>
-        </div>
+        <!-- 右側欄：Next 框框 (上) + 旋轉鍵 (下) -->
+        <div id="right-column" class="side-column">
+            <!-- 上半部：資訊框 -->
+            <div class="top-section">
+                <div id="next-box" class="cyber-box">
+                    <div class="box-label">NEXT</div>
+                    <div id="next-canvas-0" class="preview-canvas"></div>
+                    <div id="next-canvas-1" class="preview-canvas small-next"></div>
+                    <div id="next-canvas-2" class="preview-canvas small-next"></div>
+                    <div id="next-canvas-3" class="preview-canvas small-next"></div>
+                </div>
+            </div>
 
-        <!-- 右側控制：分離的旋轉鍵 -->
-        <div class="controls-container">
-            <div class="ctrl-btn btn-rotate" id="btn-rotate">
-                <svg viewBox="0 0 24 24"><path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6 0 2.97-2.17 5.43-5 5.91v2.02c3.95-.49 7-3.85 7-7.93 0-4.42-3.58-8-8-8zm-6 8c0-1.65.67-3.15 1.76-4.24l1.42 1.42C8.45 10.9 8 11.9 8 13c0 2.21 1.79 4 4 4v2c-3.31 0-6-2.69-6-6z"/></svg>
+            <!-- 下半部：按鍵區 -->
+            <div class="bottom-section">
+                <div class="ctrl-btn btn-rotate" id="btn-rotate">
+                    <svg viewBox="0 0 24 24"><path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6 0 2.97-2.17 5.43-5 5.91v2.02c3.95-.49 7-3.85 7-7.93 0-4.42-3.58-8-8-8zm-6 8c0-1.65.67-3.15 1.76-4.24l1.42 1.42C8.45 10.9 8 11.9 8 13c0 2.21 1.79 4 4 4v2c-3.31 0-6-2.69-6-6z"/></svg>
+                </div>
             </div>
         </div>
-    </div>
+
+    </div> <!-- End board-area -->
 
     <div id="modal">
         <h1 id="modal-title">CYBER TETRIS</h1>
@@ -374,7 +360,6 @@
     const LOGICAL_WIDTH = 720;
     const LOGICAL_HEIGHT = 1280;
 
-    // 修改：寬度改為 12
     const BOARD_WIDTH = 12; 
     const BOARD_HEIGHT = 20;
     
@@ -484,7 +469,8 @@
 
         const pScene = new THREE.Scene();
         const pCamera = new THREE.PerspectiveCamera(50, width / height, 0.1, 50);
-        pCamera.position.set(0, 0, 4.5); 
+        const dist = container.id.includes('next-canvas-0') ? 5.0 : 4.5;
+        pCamera.position.set(0, 0, dist); 
         pCamera.lookAt(0, 0, 0);
 
         const pRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -577,20 +563,14 @@
 
         for (let x = 0; x <= BOARD_WIDTH; x++) {
             const xPos = x - BOARD_WIDTH / 2;
-            const points = [];
-            points.push(new THREE.Vector3(xPos, -0.5, 0));
-            points.push(new THREE.Vector3(xPos, BOARD_HEIGHT - 0.5, 0));
-            const geo = new THREE.BufferGeometry().setFromPoints(points);
-            gridGroup.add(new THREE.Line(geo, gridMat));
+            const points = [new THREE.Vector3(xPos, -0.5, 0), new THREE.Vector3(xPos, BOARD_HEIGHT - 0.5, 0)];
+            gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), gridMat));
         }
 
         for (let y = 0; y <= BOARD_HEIGHT; y++) {
             const yPos = y - 0.5;
-            const points = [];
-            points.push(new THREE.Vector3(-BOARD_WIDTH / 2, yPos, 0));
-            points.push(new THREE.Vector3(BOARD_WIDTH / 2, yPos, 0));
-            const geo = new THREE.BufferGeometry().setFromPoints(points);
-            gridGroup.add(new THREE.Line(geo, gridMat));
+            const points = [new THREE.Vector3(-BOARD_WIDTH / 2, yPos, 0), new THREE.Vector3(BOARD_WIDTH / 2, yPos, 0)];
+            gridGroup.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), gridMat));
         }
 
         gridGroup.position.z = -0.5;
@@ -697,7 +677,6 @@
             const wy = activePiece.y + dy;
             mesh.position.set(wx, wy, 0);
             const edges = new THREE.EdgesGeometry(geometry);
-            // Black lines for falling pieces
             mesh.add(new THREE.LineSegments(edges, new THREE.LineBasicMaterial({ color: 0x000000, opacity: 1 })));
             activeGroup.add(mesh);
         });
@@ -798,7 +777,6 @@
                 
                 if(isTetris) {
                     triggerShake(1.5);
-                    // 簡單閃光
                     document.body.style.backgroundColor = '#222';
                     setTimeout(() => document.body.style.backgroundColor = '#000', 100);
                 } else {
@@ -828,7 +806,6 @@
     }
 
     function updateScore(lines) {
-        // 修改：4行 500分
         const lineScores = [0, 100, 200, 300, 500];
         score += lineScores[lines] * level;
         level = Math.floor(score/1000) + 1;
@@ -1025,18 +1002,15 @@
         bind('btn-down', () => { movePiece(0, -1); dropCounter=0; });
         bind('btn-rotate', () => rotatePiece());
         
-        // 綁定獨立的 HOLD 按鍵
         bind('btn-hold', () => triggerHold());
         
-        // 保留 Hold 框框點擊功能
+        // Hold box click
         const hb = document.getElementById('hold-box');
         if(hb) {
              hb.addEventListener('pointerdown', (e) => {
                 e.preventDefault();
                 triggerHold();
-                // 視覺回饋
                 hb.style.transform = "scale(0.95)";
-                // 同步點亮下方按鍵
                 toggleBtn('btn-hold', true);
             });
             hb.addEventListener('pointerup', () => {
