@@ -891,11 +891,23 @@
         const btn = document.getElementById('start-btn');
         t.innerText = "GAME OVER";
         t.style.color = "#ff0000";
-        t.style.textShadow = "0 0 10px #ff0000";
+        t.style.textShadow = "0 0 20px #ff0000"; 
+        t.style.fontSize = "65px"; 
+        t.style.lineHeight = "1.2";
+        
         fs.style.display = 'block';
         fs.innerText = "FINAL SCORE: " + score;
+        fs.style.fontSize = "28px"; 
+        fs.style.marginTop = "20px";
+
         btn.innerText = "TRY AGAIN";
+        btn.style.marginTop = "30px";
+        btn.style.transform = "scale(1.2)"; 
+
         m.style.display = 'block';
+        m.style.width = "600px"; // 加大寬度 (從 450px 改為 600px)
+        m.style.padding = "80px 50px"; // 加大內距 (讓框框看起來更厚實)
+        m.style.borderRadius = "20px"; // 稍微增加圓角
     }
 
     function animate(time) {
@@ -1008,14 +1020,29 @@
         isPaused = !isPaused;
         const m = document.getElementById('modal');
         const t = document.getElementById('modal-title');
+        const fs = document.getElementById('final-score');
         const btn = document.getElementById('start-btn');
         if(isPaused) {
             pauseStartTime = performance.now();
+            
+            // 重置樣式 (確保暫停畫面不會被 Game Over 的樣式影響)
             t.innerText = "PAUSED";
             t.style.color = "#0ff";
+            t.style.textShadow = "";
+            t.style.fontSize = "40px"; // 回復原本大小
+            t.style.lineHeight = "normal";
+            
+            fs.style.display = 'none';
+            fs.style.fontSize = "16px";
+            fs.style.marginTop = "0";
+            
             btn.innerText = "RESUME";
-            document.getElementById('final-score').style.display = 'none';
+            btn.style.marginTop = "20px";
+            btn.style.transform = "scale(1)";
+            
             m.style.display = 'block';
+            m.style.width = ""; // 回復預設寬度
+            m.style.padding = "40px"; // 回復預設內距
         } else {
             resumeGame();
         }
@@ -1072,4 +1099,3 @@
 </script>
 </body>
 </html>
-
